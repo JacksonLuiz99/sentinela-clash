@@ -1,0 +1,18 @@
+{
+  "name": "clan-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "build": "node scripts/build.mjs",
+    "test": "node --test",
+    "check": "node --check worker/index.js && node --check worker/monitor.js && node --check worker/events.js && node --check public/app.js",
+    "connection:test": "node --env-file-if-exists=.dev.vars scripts/check-connection.mjs",
+    "db:local": "wrangler d1 migrations apply clan-monitor --local",
+    "db:remote": "wrangler d1 migrations apply clan-monitor --remote",
+    "deploy:worker": "wrangler deploy"
+  },
+  "devDependencies": { "wrangler": "4.164.0" }
+}

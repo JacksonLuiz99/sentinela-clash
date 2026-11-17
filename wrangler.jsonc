@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "clan-monitor",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-17",
+  "workers_dev": true,
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "triggers": { "crons": ["*/5 * * * *"] },
+  "vars": {
+    "CLAN_TAG": "#R0UPVVVY",
+    "CLASH_API_BASE": "https://cocproxy.royaleapi.dev/v1",
+    "PUBLIC_ORIGIN": "http://localhost:8787",
+    "ALERT_TYPES": "member_join,member_leave,war_start,war_end,war_reminder",
+    "ALERT_CHANNELS": "telegram,discord"
+  },
+  "d1_databases": [{
+    "binding": "DB", "database_name": "clan-monitor",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations"
+  }]
+}
