@@ -2,6 +2,12 @@
 
 Monitor do clã **#R0UPVVVY**, com painel público para Vercel, coleta agendada no Cloudflare Workers, histórico no D1 e avisos independentes para Telegram e Discord.
 
+Painel: https://sentinela-clash.vercel.app
+
+Monitor: https://clan-monitor.clan-monitor.workers.dev
+
+O código está conectado ao projeto Vercel `sentinela-clash`. A variável de produção `PUBLIC_API_BASE` aponta para o monitor. As alterações no Worker continuam exigindo `npm run deploy:worker`; mudanças no GitHub publicam o painel pela integração da Vercel.
+
 ## O que já está implementado
 
 - Membros, cargos, CVs, troféus, doações e recebimentos atuais.

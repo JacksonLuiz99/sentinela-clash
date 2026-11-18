@@ -9,7 +9,7 @@
   "vars": {
     "CLAN_TAG": "#R0UPVVVY",
     "CLASH_API_BASE": "https://cocproxy.royaleapi.dev/v1",
-    "PUBLIC_ORIGIN": "http://localhost:8787",
+    "PUBLIC_ORIGIN": "https://sentinela-clash.vercel.app",
     "ALERT_TYPES": "member_join,member_leave,war_start,war_end,war_reminder",
     "ALERT_CHANNELS": "telegram,discord"
   },
