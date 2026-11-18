@@ -15,7 +15,7 @@
   },
   "d1_databases": [{
     "binding": "DB", "database_name": "clan-monitor",
-    "database_id": "00000000-0000-0000-0000-000000000000",
+    "database_id": "9473f0f1-4611-46cb-9e8a-4f7423c2a53a",
     "migrations_dir": "migrations"
   }]
 }
