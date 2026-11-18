@@ -33,7 +33,9 @@ O painel usa a identidade TIGERS OF WAR 4, emblema vetorial próprio, preto/lara
 
 Os endpoints `warlog` e `capitalraidseasons` são consultados no máximo uma vez por hora. Falhas são indicadas na respectiva seção, preservando a última resposta válida; não interrompem o acompanhamento principal nem notificações. Nas primeiras verificações, ambos retornaram HTTP 500 temporariamente; a coleta de produção voltou a responder e importou 30 registros de guerras e temporadas recentes da Capital. Novas falhas preservam os dados coletados e são tentadas novamente após o intervalo de cache.
 
-Links públicos são variáveis do Worker: `DISCORD_PUBLIC_URL` e `TELEGRAM_PUBLIC_URL`. A API valida os domínios e nunca reutiliza a URL secreta do webhook como convite. O link do Telegram abre o bot; ele não cadastra automaticamente novos destinatários. Atualmente os avisos são enviados ao chat e ao canal configurados pelo administrador.
+O Instagram da família, https://www.instagram.com/tigers_of_war/, está disponível no cabeçalho, na central e na chamada de comunidade.
+
+Links públicos de avisos são variáveis do Worker: `DISCORD_PUBLIC_URL` e `TELEGRAM_PUBLIC_URL`. A API valida os domínios e nunca reutiliza a URL secreta do webhook como convite. O link do Telegram abre o bot; ele não cadastra automaticamente novos destinatários. Atualmente os avisos são enviados ao chat e ao canal configurados pelo administrador.
 
 ## Preferências de leitura e imagem do clã
 

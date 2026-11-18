@@ -66,3 +66,7 @@ html:not([data-theme="dark"]) .developer{border-color:var(--line)}
 .family-switcher>p{max-width:400px;margin:0;font-size:.6875rem;line-height:1.7;color:var(--muted)}
 @media(max-width:1100px){.family-switcher>p{max-width:300px}.family-switcher select{width:300px}}
 @media(max-width:760px){.family-switcher{align-items:stretch;flex-direction:column;gap:12px;padding-top:18px;padding-bottom:18px}.family-switcher>p{max-width:none;font-size:.625rem}.family-switcher label{align-items:stretch;flex-direction:column;gap:7px}.family-switcher select{width:100%;min-width:0;font-size:.6875rem}.family-switcher .eyebrow{font-size:.4375rem;letter-spacing:1.1px}}
+
+.channel-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.instagram-link{white-space:nowrap}
+@media(max-width:1100px){.channel-grid{grid-template-columns:1fr 1fr}.header-actions{gap:15px}.site-header{height:auto;min-height:94px;padding-top:15px;padding-bottom:15px;flex-wrap:wrap}}
+@media(max-width:760px){.channel-grid{grid-template-columns:1fr}.site-header{min-height:76px}.join-actions .instagram-link{white-space:normal}}
