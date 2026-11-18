@@ -1,0 +1,87 @@
+import test, { afterEach } from 'node:test';
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
+import { familyDashboard } from '../worker/family.js';
+import { readState, stateStatement } from '../worker/monitor.js';
+import { route } from '../worker/index.js';
+import { CLANS, DEFAULT_CLAN, preferredClan, findClan } from '../public/clans.js';
+
+const originalFetch = globalThis.fetch;
+afterEach(()=>{globalThis.fetch=originalFetch;});
+const now = Date.parse('2026-11-18T16:00:00Z');
+const a = '#29P0V8VCG';const b = '#28L88PQ2';
+function database() {
+  const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON');
+  sql.exec(readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));
+  const statement=(query,args=[])=>({bind(...values){return statement(query,values);},async first(){return sql.prepare(query).get(...args)||null;},async all(){return {results:sql.prepare(query).all(...args)};},async run(){const r=sql.prepare(query).run(...args);return {meta:{changes:Number(r.changes)}};}});
+  return {prepare:q=>statement(q),async batch(statements){for(const s of statements)await s.run();},close:()=>sql.close()};
+}
+function mockFamilyApi() {
+  const calls=[];
+  globalThis.fetch=async(url,options)=>{
+    calls.push({url,method:options?.method || 'GET'});
+    const tag=decodeURIComponent(new URL(url).pathname.split('/')[3]);
+    if(url.endsWith('/currentwar/leaguegroup'))return Response.json({},{status:404});
+    if(url.endsWith('/currentwar'))return Response.json({state:'inWar',startTime:'20261118T120000.000Z',endTime:'20261119T120000.000Z',teamSize:1,
+      clan:{tag,name:findClan(tag)?.name,stars:3,destructionPercentage:100,members:[{tag:tag+'A',name:'Guerreiro '+tag,mapPosition:1,attacks:[{stars:3,destructionPercentage:100}]}]},
+      opponent:{tag:'#ENEMY',name:'Oponente',stars:2,destructionPercentage:80,members:[]}});
+    if(url.endsWith('/warlog'))return Response.json({items:[{result:'win',endTime:'20261117T120000.000Z',clan:{tag,stars:3},opponent:{tag:'#ENEMY',stars:2}}]});
+    if(url.endsWith('/capitalraidseasons'))return Response.json({items:[]});
+    return Response.json({tag,name:findClan(tag)?.name,members:1,memberList:[{tag:tag+'A',name:'Guerreiro '+tag,donations:20}]});
+  };
+  return calls;
+}
+function env(DB){return {DB,CLAN_TAG:DEFAULT_CLAN,CLASH_API_TOKEN:'test-secret',TELEGRAM_BOT_TOKEN:'123:secret',TELEGRAM_CHAT_ID:'-123',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/secret'};}
+
+test('catálogo contém exatamente os seis clãs e valida preferências antigas',()=>{
+  assert.equal(CLANS.length,6);assert.equal(preferredClan(a.toLowerCase()),a);
+  assert.equal(preferredClan('javascript:alert(1)'),DEFAULT_CLAN);
+  assert.equal(preferredClan('#UNKNOWN'),DEFAULT_CLAN);assert.equal(findClan(null),null);
+});
+test('dois clãs mantêm guerra, membros e histórico separados',async()=>{
+  const DB=database();mockFamilyApi();const one=await familyDashboard(env(DB),a,now);const two=await familyDashboard(env(DB),b,now);
+  assert.equal(one.current.clan.tag,a);assert.equal(two.current.clan.tag,b);
+  assert.equal(one.current.war.clan.tag,a);assert.equal(two.wars[0].clan.tag,b);
+  assert.equal(one.extras.warLog.items[0].clan.tag,a);assert.equal(two.extras.warLog.items[0].clan.tag,b);
+  assert.ok(!JSON.stringify(one).includes('Guerreiro '+b));DB.close();
+});
+test('novos clãs não alteram dados nem fila de notificações do clã original',async()=>{
+  const DB=database();const primary={clan:{tag:DEFAULT_CLAN},capturedAt:1};await stateStatement(DB,'current',primary).run();const calls=mockFamilyApi();
+  const result=await familyDashboard(env(DB),a,now);assert.deepEqual(await readState(DB,'current'),primary);
+  assert.deepEqual(result.channels,{telegram:false,discord:false});assert.equal(result.monitoringMode,'on_demand');
+  assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM deliveries').first()).n,0);
+  assert.equal((await DB.prepare("SELECT until_ms FROM leases WHERE id='sync'").first()).until_ms,0);
+  assert.ok(calls.every(c=>c.method==='GET' && !c.url.includes('telegram') && !c.url.includes('discord')));DB.close();
+});
+test('cache evita nova consulta por cinco minutos, isoladamente por clã',async()=>{
+  const DB=database();const calls=mockFamilyApi();await familyDashboard(env(DB),a,now);const count=calls.length;
+  await familyDashboard(env(DB),a,now+60000);assert.equal(calls.length,count);
+  await familyDashboard(env(DB),b,now+60000);assert.ok(calls.length>count);
+  const before=calls.length;await familyDashboard(env(DB),a,now+300001);assert.equal(calls.length-before,2);DB.close();
+});
+test('falha de rede mantém último dado do clã correto e informa a falha',async()=>{
+  const DB=database();mockFamilyApi();await familyDashboard(env(DB),a,now);
+  globalThis.fetch=async()=>Response.json({},{status:503});
+  const result=await familyDashboard(env(DB),a,now+300001);
+  assert.equal(result.current.clan.tag,a);assert.equal(result.current.capturedAt,now);assert.equal(result.health.code,'api_http_503');DB.close();
+});
+test('rota recusa tag fora da família sem consultar a API',async()=>{
+  const DB=database();const calls=mockFamilyApi();const r=await route(new Request('https://worker.test/api/dashboard?clan=%23UNKNOWN'),env(DB));
+  assert.equal(r.status,400);assert.equal(calls.length,0);DB.close();
+});
+test('rota do clã selecionado não revela os segredos dos canais existentes',async()=>{
+  const DB=database();mockFamilyApi();const r=await route(new Request('https://worker.test/api/dashboard?clan='+encodeURIComponent(a)),env(DB));
+  assert.equal(r.status,200);const body=await r.text();const data=JSON.parse(body);
+  assert.equal(data.clanTag,a);assert.equal(data.current.clan.tag,a);assert.ok(!body.includes('secret'));assert.ok(!body.includes('-123'));DB.close();
+});
+test('trava de um clã não impede consultar outro',async()=>{
+  const DB=database();mockFamilyApi();await DB.prepare('INSERT INTO leases(id,until_ms) VALUES (?,?)').bind('family:'+a,now+10000).run();
+  const locked=await familyDashboard(env(DB),a,now);assert.equal(locked.current,null);
+  const other=await familyDashboard(env(DB),b,now);assert.equal(other.current.clan.tag,b);DB.close();
+});
+test('a referência de doações de 24h pertence ao clã selecionado',async()=>{
+  const DB=database();mockFamilyApi();await familyDashboard(env(DB),a,now);
+  const later=await familyDashboard(env(DB),a,now+86400000);
+  assert.equal(later.baseline.clan.tag,a);assert.equal(later.baseline.capturedAt,now);DB.close();
+});

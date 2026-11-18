@@ -41,6 +41,27 @@ O cabeçalho oferece temas Escuro (padrão), Claro e Confortável (sépia), alé
 
 A tipografia usa unidades relativas para que o controle afete todas as seções. A arte enviada pelo usuário está preservada sem alterações em `public/images/tigers-of-war.png`, com enquadramento por CSS no cabeçalho e exibição integral no destaque principal. O antigo emblema vetorial permanece como fallback para dados sem brasão e ícone da aplicação.
 
+## Família TIGERS: seleção de clã
+
+O seletor oferece os seis clãs confirmados na API:
+
+| Clã | Tag |
+| --- | --- |
+| TIGERS OF WAR 4 | #R0UPVVVY |
+| TOW TEAM tm | #29P0V8VCG |
+| TIGERS OF WAR | #28L88PQ2 |
+| TOW-eSports | #2PG9PV22C |
+| TIGERS OF WAR 5 | #202YP22U9 |
+| TIGERS OF WAR 8 | #28R20CPP8 |
+
+A última escolha fica na chave `tigers-last-clan` do localStorage, independentemente do tema e da fonte. Uma preferência inválida retorna ao TIGERS OF WAR 4. A troca cancela a consulta anterior, limpa os dados exibidos e verifica a tag da resposta antes de atualizar a tela. O botão para abrir o clã no jogo também acompanha a seleção.
+
+`GET /api/dashboard?clan=%23TAG` aceita somente as tags do catálogo em `public/clans.js`. Sem parâmetro, mantém a compatibilidade com o clã original. Os novos clãs usam cache isolado em `state`, sob `family:<tag>`, e uma trava própria. Perfil, guerra e histórico são atualizados ao consultar o painel, com cache de cinco minutos e cache complementar de uma hora. Até 20 guerras detalhadas e 26 amostras horárias são retidas por clã consultado. Os dados do clã original, seu cron e a fila de avisos não são migrados nem compartilhados com os novos clãs.
+
+**Escopo atual:** somente o TIGERS OF WAR 4 tem monitoramento automático e avisos configurados. Os demais são consultados pelo painel e não enviam notificações. O histórico individual deles cresce com os confrontos consultados, sem promessa de capturar guerras enquanto ninguém usa o painel. Canais e monitoramento contínuo dos novos clãs serão configurados em etapa futura.
+
+Na validação inicial, TIGERS OF WAR e TOW-eSports retornaram acesso negado aos dados de guerra. Seus perfis continuam disponíveis, e o painel identifica a guerra como indisponível em vez de inferir que não há confronto.
+
 ## Arquitetura e custo
 
 ```text

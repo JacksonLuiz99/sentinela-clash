@@ -1,3 +1,4 @@
+import { CLANS, DEFAULT_CLAN, findClan, preferredClan } from './clans.js';
 import { performance, mergedHistory, outcome, parseGameTime, publicLinks } from './stats.js';
 const $ = id => document.getElementById(id);
 const num = (value, digits = 0) => value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString('pt-BR', {maximumFractionDigits:digits});
@@ -11,6 +12,41 @@ const empty = text => `<div class="empty">${esc(text)}</div>`;
 const playerLink = tag => `https://link.clashofclans.com/pt?action=OpenPlayerProfile&tag=${encodeURIComponent((tag || '').replace('#',''))}`;
 const badge = (url, alt = '') => /^https:\/\/api-assets\.clashofclans\.com\//.test(url || '') ? `<img src="${esc(url)}" alt="${esc(alt)}" width="65" height="72" loading="lazy">` : '<img src="/tiger.svg" alt="" width="65" height="72">';
 let data = null; let busy = false;
+const CLAN_STORAGE = 'tigers-last-clan';
+let selectedClan = DEFAULT_CLAN;
+try { selectedClan = preferredClan(localStorage.getItem(CLAN_STORAGE)); } catch { /* Funciona mesmo sem armazenamento local. */ }
+let activeRequest = 0; let activeController = null;
+const viewCache = new Map();
+function setClanIdentity(clan = findClan(selectedClan)) {
+  $('clan-select').value = selectedClan;
+  $('observed-clan-name').textContent = clan?.name || selectedClan;
+  $('observed-clan-tag').textContent = selectedClan;
+  document.title = `${clan?.name || selectedClan} · Família TIGERS`;
+  document.querySelectorAll('[data-clan-link]').forEach(a => a.href = `https://link.clashofclans.com/pt?action=OpenClanProfile&tag=${encodeURIComponent(selectedClan.slice(1))}`);
+  $('clan-monitoring-note').textContent = selectedClan === DEFAULT_CLAN ? 'Monitoramento automático. Os avisos deste clã já estão configurados.' : 'Consulta no painel. Os avisos deste clã serão configurados depois; o histórico individual registra guerras consultadas.';
+}
+function clearClanData() {
+  data = null;
+  for (const id of ['metric-wins','metric-members','metric-trophies','metric-league','metric-level','metric-streak']) $(id).textContent = '—';
+  $('clan-meta').replaceChildren();$('clan-description').textContent = '';$('clan-requirements').replaceChildren();$('donation-total').textContent = '';
+  renderWar(null);$('war-state').textContent = 'CARREGANDO';$('war-summary').innerHTML = empty('Consultando a guerra deste clã…');
+  renderMembers();$('member-count').textContent = '— GUERREIROS';renderRankings();renderHistory();renderCapital({});
+  renderEvents([],'events');renderEvents([],'recent');$('donors').innerHTML = empty('Consultando doações deste clã…');
+  for (const channel of ['telegram','discord']) {$(`${channel}-state`).textContent='CARREGANDO';$(`${channel}-state`).classList.remove('good');$(`${channel}-info`).textContent='Consultando a configuração deste clã…';}
+  $('status').textContent = `CARREGANDO ${findClan(selectedClan)?.name || selectedClan} · Os dados são separados por clã.`;
+  $('setup').hidden = true;
+}
+function switchClan(tag, persist = true) {
+  const selected = findClan(tag);if(!selected) return;
+  activeController?.abort();activeRequest++;busy = false;selectedClan = selected.tag;
+  if(persist) {try {localStorage.setItem(CLAN_STORAGE, selectedClan);} catch { /* A troca continua funcionando. */ }}
+  clearClanData();setClanIdentity();
+  if(viewCache.has(selectedClan)) render(viewCache.get(selectedClan));
+  refresh();
+}
+$('clan-select').replaceChildren(...CLANS.map(clan => {const option=document.createElement('option');option.value=clan.tag;option.textContent=`${clan.name} · ${clan.tag}`;return option;}));
+$('clan-select').addEventListener('change',event=>switchClan(event.target.value));
+addEventListener('storage',event=>{if(event.key===CLAN_STORAGE || event.key===null){let tag=DEFAULT_CLAN;try{tag=preferredClan(localStorage.getItem(CLAN_STORAGE));}catch{}if(tag!==selectedClan)switchClan(tag,false);}});
 function tab(name, scroll = false) {
   const panel = $(name); if (!panel?.classList.contains('tab-panel')) return;
   document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.id !== name);
@@ -109,12 +145,12 @@ function renderCapital(clan) {
 }
 function render(payload) {
   data = payload;const current = data.current;const clan = current?.clan;const health = data.health || {};
-  $('setup').hidden = Boolean(clan);renderLinks(data.links);
+  $('setup').hidden = Boolean(clan);renderLinks(data.links);if(clan)setClanIdentity(clan);
   const stale = current && Date.now()-current.capturedAt > 15*60000;
   const warStale = current?.war && (!current.warCapturedAt || Date.now()-current.warCapturedAt > 15*60000);
   const ok = health.code === 'ok' && !stale;
   $('status').classList.toggle('warn',!ok || Boolean(warStale));
-  $('status').textContent = clan ? `${ok?'MONITOR CONECTADO':'COLETA COM PENDÊNCIAS'} · ${date(current.capturedAt)} · horário de Cuiabá · consultas a cada 5 min${stale?' · dados desatualizados':''}${warStale?' · guerra aguardando atualização':''}` : 'Aguardando conexão com o monitor do clã.';
+  $('status').textContent = clan ? `${ok?'MONITOR CONECTADO':'COLETA COM PENDÊNCIAS'} · ${date(current.capturedAt)} · horário de Cuiabá · ${data.monitoringMode === 'on_demand'?'consulta no painel, cache de até 5 min':'consultas a cada 5 min'}${stale?' · dados desatualizados':''}${warStale?' · guerra aguardando atualização':''}` : 'Aguardando conexão com o monitor do clã.';
   if (clan) {
     $('metric-wins').textContent = num(clan.warWins);$('metric-members').textContent = `${clan.members}/50`;
     $('metric-trophies').textContent = num(clan.clanPoints);$('metric-level').textContent = `CLÃ NÍVEL ${clan.clanLevel}`;
@@ -125,7 +161,7 @@ function render(payload) {
     $('clan-meta').innerHTML = `<span>CLÃ NÍVEL ${num(clan.clanLevel)}</span><span>${esc(clan.location?.countryCode === 'BR'?'BRASIL':clan.location?.name || 'GLOBAL')}</span><span>${clan.warFrequency === 'always'?'GUERRA SEMPRE':'EM COMBATE'}</span>`;
     $('clan-description').textContent = clan.description || 'Respeito, educação e compromisso com a tropa.';
     $('clan-requirements').innerHTML = `<span>CV ${num(clan.requiredTownhallLevel)}+</span><span>${num(clan.requiredTrophies)}+ TROFÉUS</span><span>${clan.type === 'inviteOnly'?'ENTRADA POR CONVITE':clan.type === 'open'?'CLÃ ABERTO':'CLÃ FECHADO'}</span><span>${esc(clan.requiredLeagueTier?.name || 'LIGA DO CLÃ')}</span>`;
-    renderWar(current.war);renderMembers();renderCapital(clan);
+    renderWar(current.war);if(!current.war && health.code !== 'ok'){$('war-state').textContent='GUERRA INDISPONÍVEL';$('war-summary').innerHTML=empty('A API não disponibilizou os dados da guerra deste clã.');}renderMembers();renderCapital(clan);
     const top = [...clan.memberList].sort((a,b) => (b.donations || 0)-(a.donations || 0)).slice(0,5);const max = Math.max(1,...top.map(m => m.donations || 0));
     $('donors').classList.remove('empty');$('donors').innerHTML = top.map((m,i) => `<div class="donor"><span>0${i+1}</span><div><strong>${esc(m.name)}</strong><progress value="${Number(m.donations || 0)}" max="${max}" aria-label="${esc(m.name)}: ${num(m.donations)} doações"></progress></div><b>${num(m.donations)}</b></div>`).join('');
     $('donation-total').textContent = `${num(clan.memberList.reduce((n,m) => n+(m.donations || 0),0))} tropas doadas pelos membros atuais nesta temporada.`;
@@ -135,24 +171,29 @@ function render(payload) {
     const enabled = data.channels?.[channel];const delivery = data.delivery?.find(d => d.channel === channel);
     $(`${channel}-state`).textContent = enabled?'AVISOS ATIVOS':'AGUARDANDO CONEXÃO';
     $(`${channel}-state`).classList.toggle('good',Boolean(enabled));
-    $(`${channel}-info`).textContent = enabled ? `${delivery?.last_sent?'Último envio confirmado: '+date(delivery.last_sent):'Canal configurado, aguardando o primeiro envio.'}${delivery?.retrying?' Há mensagens aguardando nova tentativa.':''}` : 'Este canal ainda não está conectado ao monitor.';
+    $(`${channel}-info`).textContent = enabled ? `${delivery?.last_sent?'Último envio confirmado: '+date(delivery.last_sent):'Canal configurado, aguardando o primeiro envio.'}${delivery?.retrying?' Há mensagens aguardando nova tentativa.':''}` : data.monitoringMode === 'on_demand' ? 'Os avisos deste clã serão configurados em uma próxima etapa.' : 'Este canal ainda não está conectado ao monitor.';
   }
 }
 async function refresh() {
   if (busy) return;busy = true;$('refresh').disabled = true;
-  // Mantém a inspeção de um confronto aberta durante atualizações automáticas.
+  const requestId = ++activeRequest;const tag = selectedClan;
+  activeController = new AbortController();
+  const controller = activeController;const timer=setTimeout(()=>controller.abort(),25000);
   const openMembers = [...document.querySelectorAll('#pending details[open]')].map(d => d.querySelector('summary')?.textContent);
   try {
     const base = window.CLAN_CONFIG?.apiBase || '';
-    const response = await fetch(`${base}/api/dashboard`,{signal:AbortSignal.timeout(15000)});
+    const response = await fetch(`${base}/api/dashboard?clan=${encodeURIComponent(tag)}`,{signal:controller.signal});
     if (!(response.headers.get('Content-Type') || '').includes('application/json')) throw new Error('configuration');
     const payload = await response.json();if(!response.ok && !payload.health) throw new Error('network');
-    render(payload);
+    if(requestId!==activeRequest || tag!==selectedClan) return;
+    if(payload.clanTag!==tag || (payload.current?.clan && payload.current.clan.tag!==tag)) throw new Error('wrong_clan');
+    viewCache.set(tag,payload);render(payload);
     document.querySelectorAll('#pending details').forEach(d => {if(openMembers.includes(d.querySelector('summary')?.textContent)) d.open = true;});
   } catch {
-    $('status').classList.add('warn');$('status').textContent = data?.current ? `MONITOR TEMPORARIAMENTE INDISPONÍVEL · Exibindo a coleta de ${date(data.current.capturedAt)}.` : 'O quartel está aguardando conexão. Tente atualizar em instantes.';
+    if(requestId!==activeRequest || tag!==selectedClan) return;
+    $('status').classList.add('warn');$('status').textContent = data?.current ? `CONSULTA TEMPORARIAMENTE INDISPONÍVEL · ${findClan(tag)?.name} · Últimos dados de ${date(data.current.capturedAt)}.` : `Não foi possível consultar ${findClan(tag)?.name || tag}. Tente atualizar ou selecione outro clã.`;
     if (!data?.current) $('setup').hidden = false;
-  } finally {busy = false;$('refresh').disabled = false;}
+  } finally {clearTimeout(timer);if(requestId===activeRequest){busy = false;$('refresh').disabled = false;}}
 }
-$('refresh').addEventListener('click',refresh);refresh();
+$('refresh').addEventListener('click',refresh);switchClan(selectedClan,false);
 setInterval(() => {if(!document.hidden) refresh();},60000);setInterval(() => {if(!document.hidden) updateClock();},1000);

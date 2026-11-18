@@ -1,5 +1,7 @@
 import { readState, synchronize } from './monitor.js';
 import { publicLinks } from '../public/stats.js';
+import { CLANS, DEFAULT_CLAN, findClan } from '../public/clans.js';
+import { familyDashboard } from './family.js';
 
 const json = (data,status=200,headers={}) => Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 
@@ -12,7 +14,8 @@ async function authorized(request, token) {
 }
 
 export async function route(request,env) {
-  const path=new URL(request.url).pathname;
+  const url=new URL(request.url);
+  const path=url.pathname;
   if (!path.startsWith('/api/')) {
     const response=await env.ASSETS.fetch(request);
     const headers=new Headers(response.headers);
@@ -31,8 +34,11 @@ export async function route(request,env) {
   }
   if (path !== '/api/dashboard') return json({error:'not_found'},404,headers);
   if (request.method !== 'GET') return json({error:'method_not_allowed'},405,headers);
-  if (!env.DB) return json({configured:false,clanTag:env.CLAN_TAG || '#R0UPVVVY',health:{code:'missing_database'}},503,headers);
+  const selected=findClan(url.searchParams.get('clan') || env.CLAN_TAG || DEFAULT_CLAN);
+  if (!selected) return json({error:'unknown_clan'},400,headers);
+  if (!env.DB) return json({configured:false,clanTag:selected.tag,clans:CLANS,health:{code:'missing_database'}},503,headers);
   try {
+    if (selected.tag !== (env.CLAN_TAG || DEFAULT_CLAN)) return json(await familyDashboard(env,selected.tag),200,headers);
     const [current,health,events,wars,snapshot,delivery,extras]=await Promise.all([
       readState(env.DB,'current'),readState(env.DB,'health'),
       env.DB.prepare('SELECT id,type,message,created_at FROM events ORDER BY created_at DESC LIMIT 30').all(),
@@ -42,7 +48,7 @@ export async function route(request,env) {
       readState(env.DB,'extras')
     ]);
     const configured=Boolean(env.CLASH_API_TOKEN);
-    const payload={configured,clanTag:env.CLAN_TAG,current,health:health || {code:configured?'awaiting_first_sync':'missing_clash_token'},
+    const payload={configured,clanTag:env.CLAN_TAG,clans:CLANS,monitoringMode:'automatic',current,health:health || {code:configured?'awaiting_first_sync':'missing_clash_token'},
       events:events.results,wars:wars.results.map(w=>JSON.parse(w.payload)),
       baseline:snapshot ? {clan:JSON.parse(snapshot.payload),capturedAt:snapshot.created_at} : null,
       channels:{telegram:Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID),discord:Boolean(env.DISCORD_WEBHOOK_URL)},
@@ -50,7 +56,7 @@ export async function route(request,env) {
     // Um único documento público pode ser cacheado no painel; não há rotas públicas de escrita.
     return json(payload,200,headers);
   } catch {
-    return json({configured:false,clanTag:env.CLAN_TAG,health:{code:'database_not_ready'}},503,headers);
+    return json({configured:false,clanTag:selected.tag,clans:CLANS,health:{code:'database_not_ready'}},503,headers);
   }
 }
 
