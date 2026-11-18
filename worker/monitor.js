@@ -20,6 +20,25 @@ export function stateStatement(db, key, value) {
   return db.prepare('INSERT INTO state(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key,JSON.stringify(value));
 }
 
+export async function loadExtras(env, now, cached) {
+  if (cached?.attemptedAt && now-cached.attemptedAt < 3600000) return cached;
+  const next = { ...cached, attemptedAt: now };
+  const endpoints = [['warLog', 'warlog'], ['raids', 'capitalraidseasons']];
+  await Promise.all(endpoints.map(async ([key, endpoint]) => {
+    try {
+      const data = await clash(env, `/clans/${encodeURIComponent(env.CLAN_TAG)}/${endpoint}`);
+      if (!Array.isArray(data.items)) throw new Error('invalid_response');
+      let items = data.items.slice(0, key === 'raids' ? 3 : 30);
+      if (key === 'raids') items = items.map(r => ({ state:r.state, startTime:r.startTime, endTime:r.endTime, capitalTotalLoot:r.capitalTotalLoot, raidsCompleted:r.raidsCompleted, totalAttacks:r.totalAttacks, enemyDistrictsDestroyed:r.enemyDistrictsDestroyed, offensiveReward:r.offensiveReward, defensiveReward:r.defensiveReward,
+        members:(r.members || []).map(m => ({tag:m.tag,name:m.name,attacks:m.attacks,attackLimit:m.attackLimit,bonusAttackLimit:m.bonusAttackLimit,capitalResourcesLooted:m.capitalResourcesLooted})) }));
+      next[key] = { items, updatedAt:now, error:null };
+    } catch (e) {
+      next[key] = { ...cached?.[key], error:/^api_[a-z0-9_]+$/.test(e.message) ? e.message : 'unavailable' };
+    }
+  }));
+  return next;
+}
+
 export async function loadWar(env, now) {
   const tag = env.CLAN_TAG; const path = `/clans/${encodeURIComponent(tag)}`;
   let regular = null; let regularError = null;
@@ -141,6 +160,11 @@ export async function synchronize(env, now = Date.now()) {
     writes.push(env.DB.prepare('DELETE FROM wars WHERE updated_at < ?').bind(now-180*86400000));
     await env.DB.batch(writes);
     await deliver(env,now);
+    // Dados complementares usam cache de uma hora; falhas não interrompem guerra ou avisos.
+    try {
+      const extras = await loadExtras(env,now,await readState(env.DB,'extras'));
+      await stateStatement(env.DB,'extras',extras).run();
+    } catch { /* A coleta principal já foi persistida. */ }
     return { ok: true, warning, events:detected.length };
   } catch (e) {
     const code=/^(api_[a-z0-9_]+|invalid_clan_response)$/.test(e.message) ? e.message : 'sync_failed';

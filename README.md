@@ -20,6 +20,21 @@ O código está conectado ao projeto Vercel `sentinela-clash`. A variável de pr
 - Estado de conexão e data da coleta visíveis; dados antigos permanecem identificados em falhas.
 - Painel de configuração sem dados fictícios quando a API não está conectada.
 
+## Identidade Tigers e dados ampliados
+
+O painel usa a identidade TIGERS OF WAR 4, emblema vetorial próprio, preto/laranja/dourado e fonte Barlow Condensed hospedada no projeto (licença OFL em `public/fonts/OFL.txt`). Inclui assinatura de Jackson Luiz com link para seu portfólio.
+
+- Guerra em destaque: placar, contagem regressiva, destruição, ataques utilizados/pendentes e detalhes por participante.
+- Elite: estrelas dos ataques, triplos, média de estrelas, destruição média e participação. O ranking histórico considera somente guerras encerradas com detalhes salvos. Resumos antigos não inventam desempenho individual. O total de estrelas dos ataques pode ultrapassar o placar do clã por ataques repetidos à mesma base.
+- Histórico: reúne registros detalhados do monitor e resumos da API, sem duplicar confrontos. Os registros se identificam pela origem e podem ser filtrados por resultado.
+- Capital: liga, nível, distritos e último fim de semana de ataques, quando a API disponibilizar.
+- Tropa: descrição e requisitos do clã, doações, busca, ordenação e acesso ao perfil no jogo.
+- Interface móvel: cartões para tabelas, navegação horizontal restrita à barra de seções e respeito à preferência de movimento reduzido.
+
+Os endpoints `warlog` e `capitalraidseasons` são consultados no máximo uma vez por hora. Falhas são indicadas na respectiva seção, preservando a última resposta válida; não interrompem o acompanhamento principal nem notificações. Na implementação inicial dessas seções, ambos retornaram HTTP 500 no proxy, portanto os dados antigos dependem da recuperação do serviço.
+
+Links públicos são variáveis do Worker: `DISCORD_PUBLIC_URL` e `TELEGRAM_PUBLIC_URL`. A API valida os domínios e nunca reutiliza a URL secreta do webhook como convite. O link do Telegram abre o bot; ele não cadastra automaticamente novos destinatários. Atualmente os avisos são enviados ao chat e ao canal configurados pelo administrador.
+
 ## Arquitetura e custo
 
 ```text

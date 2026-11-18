@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
 import { detectEvents, pendingAttacks, orientWar, gameTime, warResult } from '../worker/events.js';
-import { synchronize, readState, loadWar, sendAlert } from '../worker/monitor.js';
+import { synchronize, readState, loadWar, sendAlert, loadExtras } from '../worker/monitor.js';
 import { route } from '../worker/index.js';
 
 const originalFetch=globalThis.fetch;
@@ -139,4 +139,20 @@ test('próxima rodada em preparação não esconde resultado da rodada anterior'
   assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM wars').first()).n,2);
   await synchronize(env,now+300000);
   assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM events').first()).n,1);DB.close();
+});
+
+test('dados complementares respeitam cache e mantêm último histórico em falhas',async()=>{
+  let calls=0;
+  globalThis.fetch=async()=>{calls++;return Response.json({},{status:500});};
+  const cached={attemptedAt:now-1000,warLog:{items:[{result:'win'}],updatedAt:now-1000,error:null}};
+  assert.equal(await loadExtras({CLAN_TAG:tag},now,cached),cached);assert.equal(calls,0);
+  const result=await loadExtras({CLAN_TAG:tag},now+3600000,cached);
+  assert.equal(calls,2);assert.equal(result.warLog.items[0].result,'win');assert.equal(result.warLog.error,'api_http_500');
+});
+
+test('Capital armazena resumo útil sem duplicar registros extensos de ataques',async()=>{
+  globalThis.fetch=async url=>Response.json({items:url.endsWith('/capitalraidseasons')?[{capitalTotalLoot:123,members:[{tag:'#A',name:'Ana',attacks:6,capitalResourcesLooted:123}],attackLog:[{sensitive:'not-needed'}]}]:[]});
+  const result=await loadExtras({CLAN_TAG:tag},now,null);
+  assert.equal(result.raids.items[0].capitalTotalLoot,123);assert.equal(result.raids.items[0].members[0].attacks,6);
+  assert.ok(!('attackLog' in result.raids.items[0]));
 });

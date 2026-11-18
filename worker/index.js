@@ -1,4 +1,5 @@
 import { readState, synchronize } from './monitor.js';
+import { publicLinks } from '../public/stats.js';
 
 const json = (data,status=200,headers={}) => Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 
@@ -32,19 +33,20 @@ export async function route(request,env) {
   if (request.method !== 'GET') return json({error:'method_not_allowed'},405,headers);
   if (!env.DB) return json({configured:false,clanTag:env.CLAN_TAG || '#R0UPVVVY',health:{code:'missing_database'}},503,headers);
   try {
-    const [current,health,events,wars,snapshot,delivery]=await Promise.all([
+    const [current,health,events,wars,snapshot,delivery,extras]=await Promise.all([
       readState(env.DB,'current'),readState(env.DB,'health'),
       env.DB.prepare('SELECT id,type,message,created_at FROM events ORDER BY created_at DESC LIMIT 30').all(),
       env.DB.prepare('SELECT payload FROM wars ORDER BY end_at DESC LIMIT 20').all(),
       env.DB.prepare('SELECT payload,created_at FROM snapshots WHERE created_at <= ? ORDER BY created_at DESC LIMIT 1').bind(Date.now()-86400000).first(),
-      env.DB.prepare('SELECT channel, MAX(sent_at) AS last_sent, SUM(CASE WHEN sent_at IS NULL AND next_try>0 THEN 1 ELSE 0 END) AS retrying FROM deliveries GROUP BY channel').all()
+      env.DB.prepare('SELECT channel, MAX(sent_at) AS last_sent, SUM(CASE WHEN sent_at IS NULL AND next_try>0 THEN 1 ELSE 0 END) AS retrying FROM deliveries GROUP BY channel').all(),
+      readState(env.DB,'extras')
     ]);
     const configured=Boolean(env.CLASH_API_TOKEN);
     const payload={configured,clanTag:env.CLAN_TAG,current,health:health || {code:configured?'awaiting_first_sync':'missing_clash_token'},
       events:events.results,wars:wars.results.map(w=>JSON.parse(w.payload)),
       baseline:snapshot ? {clan:JSON.parse(snapshot.payload),capturedAt:snapshot.created_at} : null,
       channels:{telegram:Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID),discord:Boolean(env.DISCORD_WEBHOOK_URL)},
-      delivery:delivery.results};
+      delivery:delivery.results, extras, links:publicLinks(env)};
     // Um único documento público pode ser cacheado no painel; não há rotas públicas de escrita.
     return json(payload,200,headers);
   } catch {
