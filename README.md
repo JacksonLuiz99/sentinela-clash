@@ -31,7 +31,7 @@ O painel usa a identidade TIGERS OF WAR 4, emblema vetorial próprio, preto/lara
 - Tropa: descrição e requisitos do clã, doações, busca, ordenação e acesso ao perfil no jogo.
 - Interface móvel: cartões para tabelas, navegação horizontal restrita à barra de seções e respeito à preferência de movimento reduzido.
 
-Os endpoints `warlog` e `capitalraidseasons` são consultados no máximo uma vez por hora. Falhas são indicadas na respectiva seção, preservando a última resposta válida; não interrompem o acompanhamento principal nem notificações. Na implementação inicial dessas seções, ambos retornaram HTTP 500 no proxy, portanto os dados antigos dependem da recuperação do serviço.
+Os endpoints `warlog` e `capitalraidseasons` são consultados no máximo uma vez por hora. Falhas são indicadas na respectiva seção, preservando a última resposta válida; não interrompem o acompanhamento principal nem notificações. Nas primeiras verificações, ambos retornaram HTTP 500 temporariamente; a coleta de produção voltou a responder e importou 30 registros de guerras e temporadas recentes da Capital. Novas falhas preservam os dados coletados e são tentadas novamente após o intervalo de cache.
 
 Links públicos são variáveis do Worker: `DISCORD_PUBLIC_URL` e `TELEGRAM_PUBLIC_URL`. A API valida os domínios e nunca reutiliza a URL secreta do webhook como convite. O link do Telegram abre o bot; ele não cadastra automaticamente novos destinatários. Atualmente os avisos são enviados ao chat e ao canal configurados pelo administrador.
 
