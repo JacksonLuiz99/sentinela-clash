@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { performance, mergedHistory, publicLinks, outcome } from '../public/stats.js';
+import { performance, mergedHistory, publicLinks, outcome, podiumHighlights } from '../public/stats.js';
 const war = (state = 'inWar') => ({ state, kind:'regular', startTime:'20261118T010000.000Z',endTime:'20261119T010000.000Z',teamSize:2,
   clan:{tag:'#HOME',stars:5,destructionPercentage:95,members:[
     {tag:'#A',name:'Ana',townhallLevel:19,mapPosition:1,attacks:[{stars:3,destructionPercentage:100,duration:120,defenderTag:'#X'},{stars:3,destructionPercentage:100,duration:130,defenderTag:'#Y'}]},
@@ -35,4 +35,20 @@ test('links públicos aceitam convite e recusam webhook e scripts',()=>{
   assert.equal(publicLinks({DISCORD_PUBLIC_URL:'https://discord.gg/EmJeAWjBg'}).discord,'https://discord.gg/EmJeAWjBg');
   assert.equal(publicLinks({DISCORD_PUBLIC_URL:'https://discord.com/api/webhooks/123/secret'}).discord,null);
   assert.equal(publicLinks({TELEGRAM_PUBLIC_URL:'javascript:alert(1)'}).telegram,null);
+});
+
+test('pódio destaca até três guerreiros com ataques e não preenche vagas fictícias',()=>{
+  const players=performance([war()]);players.push({tag:'#C',name:'Cris',attacks:0,stars:0});
+  const podium=podiumHighlights(players);assert.equal(podium.length,2);assert.equal(podium[0].tag,'#A');assert.equal(podium[1].tag,'#B');
+  assert.equal(podiumHighlights([{tag:'#C',attacks:0}]).length,0);
+});
+test('pódio identifica empate inclusive com guerreiros além dos três exibidos',()=>{
+  const players=['A','B','C','D'].map(tag=>({tag,name:tag,attacks:2,stars:6,triples:2,averageDamage:100}));
+  const podium=podiumHighlights(players);
+  assert.equal(podium.length,3);assert.deepEqual(podium.map(p=>p.slot),[1,2,3]);
+  assert.ok(podium.every(p=>p.tiedWith===3));assert.ok(!('tiedWith' in players[0]));
+});
+test('pódio não declara empate quando a destruição média difere',()=>{
+  const players=[{tag:'#A',attacks:2,stars:5,triples:1,averageDamage:99},{tag:'#B',attacks:2,stars:5,triples:1,averageDamage:98}];
+  assert.ok(podiumHighlights(players).every(p=>p.tiedWith===0));
 });

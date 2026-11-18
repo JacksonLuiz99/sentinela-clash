@@ -1,5 +1,5 @@
 import { CLANS, DEFAULT_CLAN, findClan, preferredClan } from './clans.js';
-import { performance, mergedHistory, outcome, parseGameTime, publicLinks } from './stats.js';
+import { performance, mergedHistory, outcome, parseGameTime, publicLinks, podiumHighlights } from './stats.js';
 const $ = id => document.getElementById(id);
 const num = (value, digits = 0) => value == null || !Number.isFinite(Number(value)) ? '—' : Number(value).toLocaleString('pt-BR', {maximumFractionDigits:digits});
 const date = value => value ? new Date(value).toLocaleString('pt-BR', {timeZone:'America/Cuiaba',dateStyle:'short',timeStyle:'short'}) : '—';
@@ -90,8 +90,15 @@ function renderRankings() {
   const players = performance(wars,{completedOnly:historical});
   $('ranking-table').innerHTML = rankingRows(players);
   $('ranking-note').textContent = historical ? 'Somente guerras encerradas com detalhes individuais salvos pelo monitor. Participação: ataques realizados / disponíveis.' : 'Ataques da guerra atual. O ranking pode mudar até o encerramento.';
-  const top = performance([data?.current?.war]).filter(p => p.attacks > 0).slice(0,3);
-  $('top-warriors').innerHTML = top.length ? top.map((p,i) => `<article class="warrior-card"><span class="warrior-rank" aria-hidden="true">0${i+1}</span><span class="warrior-label">${['PONTA DE LANÇA','FORÇA DE ATAQUE','PODER DE FOGO'][i]}</span><h3>${esc(p.name)}</h3><small>CV ${num(p.townHall)} · ${p.attacks}/${p.expected} ataques utilizados</small><div class="warrior-stats"><div><strong>${p.stars} ★</strong><span>ESTRELAS</span></div><div><strong>${p.triples}</strong><span>TRIPLOS</span></div><div><strong>${num(p.averageDamage,0)}%</strong><span>DESTRUIÇÃO MÉDIA</span></div></div></article>`).join('') : '<div class="panel">'+empty('A elite aparece após os primeiros ataques registrados nesta guerra.')+'</div>';
+  const top = podiumHighlights(performance([data?.current?.war]));
+  const cup = '<svg viewBox="0 0 64 72" fill="none" aria-hidden="true"><path d="M17 10h30v19c0 12-7 20-15 20s-15-8-15-20V10Z" fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width="3"/><path d="M17 16H7v9c0 10 5 15 14 16m26-25h10v9c0 10-5 15-14 16M32 49v12m-12 5h24M24 61h16v5H24Z" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="m32 19 3 6 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1Z" fill="currentColor"/><path d="m22 2 10 4 10-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  $('top-warriors').classList.toggle('is-empty',!top.length);
+  $('top-warriors').setAttribute('role',top.length?'list':'region');
+  $('top-warriors').innerHTML = top.length ? top.map((p,i) => `<article class="podium-card podium-${['gold','silver','bronze'][i]}" role="listitem" aria-label="Destaque ${i+1}: ${esc(p.name)}${p.tiedWith?' — empate nos indicadores':''}"><span class="podium-honor">${['OURO · PONTA DE LANÇA','PRATA · FORÇA DE ATAQUE','BRONZE · PODER DE FOGO'][i]}</span><div class="podium-medallion">${cup}</div><div class="podium-body"><h3 class="podium-player"><a href="${esc(playerLink(p.tag))}" target="_blank" rel="noopener noreferrer">${esc(p.name)} ↗</a></h3><span class="podium-profile">CV ${num(p.townHall)} · ${esc(p.tag)}</span><div class="podium-stars">${p.stars} <small aria-label="estrelas">★</small></div><span class="podium-stars-label">ESTRELAS DOS ATAQUES</span><div class="podium-numbers"><div><strong>${p.triples}</strong><span>TRIPLOS</span></div><div><strong>${num(p.averageDamage,1)}%</strong><span>DESTRUIÇÃO MÉDIA</span></div><div><strong>${p.attacks}/${p.expected}</strong><span>ATAQUES USADOS</span></div></div>${p.tiedWith?`<span class="podium-tie">EMPATE NOS INDICADORES · +${p.tiedWith} GUERREIRO${p.tiedWith===1?'':'S'}</span>`:''}</div><div class="podium-step" aria-hidden="true"><span class="podium-position">0${i+1}</span><small>TIGERS OF WAR</small></div></article>`).join('') : empty('O pódio aguarda os primeiros ataques desta guerra. Nenhum guerreiro é destacado sem um ataque registrado.');
+  const tied = top.some(p=>p.tiedWith>0);
+  $('podium-tie-note').hidden = !tied;
+  $('podium-tie-note').textContent = tied ? 'Empates nos indicadores são ordenados alfabeticamente. Consulte o ranking completo para ver todos os guerreiros com o mesmo desempenho.' : '';
+
 }
 $('ranking-scope').addEventListener('change',renderRankings);
 function updateClock() {

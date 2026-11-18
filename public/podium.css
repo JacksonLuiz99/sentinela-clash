@@ -1,0 +1,45 @@
+.podium-stage{--podium-edge:#5d4227;display:grid;grid-template-columns:1fr 1.12fr 1fr;align-items:end;gap:18px;padding:46px 24px 0;border:1px solid var(--podium-edge);border-bottom:3px solid #9e6c30;position:relative;isolation:isolate;background:radial-gradient(ellipse at 50% 5%,#b77b1729,transparent 65%),linear-gradient(180deg,#151310,#0e0e0f);overflow:hidden}
+.podium-stage:before{content:'';position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(110deg,transparent 0 120px,#db9c3410 122px 123px,transparent 125px 200px);pointer-events:none}
+.podium-stage.is-empty{display:block;padding:25px;border-bottom-width:1px;background:var(--surface)}
+.podium-stage .empty{margin:0;padding:10px;font-size:.75rem}
+.podium-card{--metal:#c3ceda;--metal-dark:#8996a6;--metal-glow:#b0c9e422;--step:#343943;min-width:0;text-align:center;align-self:end;position:relative;display:flex;flex-direction:column}
+.podium-gold{--metal:#f2c96f;--metal-dark:#b58531;--metal-glow:#e6ac3426;--step:#4a3618;grid-column:2;grid-row:1;z-index:1}
+.podium-silver{grid-column:1;grid-row:1}
+.podium-bronze{--metal:#d69a71;--metal-dark:#9b6542;--metal-glow:#bf805022;--step:#3d291e;grid-column:3;grid-row:1}
+.podium-honor{display:inline-flex;justify-content:center;align-items:center;gap:7px;align-self:center;max-width:100%;color:var(--metal);font-size:.5625rem;letter-spacing:2px;font-weight:750;margin-bottom:17px;min-height:20px}
+.podium-honor:before,.podium-honor:after{content:'';width:15px;height:1px;background:var(--metal-dark)}
+.podium-gold .podium-honor{font-size:.625rem;letter-spacing:2.3px}
+.podium-medallion{width:91px;height:101px;align-self:center;display:flex;align-items:center;justify-content:center;position:relative;color:var(--metal);background:radial-gradient(circle,var(--metal-glow),transparent 75%);margin-bottom:8px}
+.podium-medallion:before{content:'';position:absolute;inset:5px 4px;border:1px solid var(--metal-dark);clip-path:polygon(0 0,100% 0,100% 73%,50% 100%,0 73%);background:linear-gradient(145deg,var(--metal-glow),transparent)}
+.podium-medallion svg{width:49px;height:55px;filter:drop-shadow(0 0 12px var(--metal-glow))}
+.podium-gold .podium-medallion{width:110px;height:120px}
+.podium-gold .podium-medallion svg{width:60px;height:68px}
+.podium-body{border:1px solid var(--metal-dark);border-top:3px solid var(--metal);background:radial-gradient(ellipse at 50% 0,var(--metal-glow),transparent 75%),#191817;padding:23px 18px 21px;box-shadow:0 10px 30px #0003;min-width:0}
+.podium-gold .podium-body{padding:29px 20px 25px;box-shadow:0 0 35px #bd8f1914,0 12px 35px #0004}
+.podium-player{font:750 1rem/1.5 system-ui,sans-serif;letter-spacing:-.2px;overflow-wrap:anywhere;margin:0;min-width:0}
+.podium-gold .podium-player{font-size:1.125rem}
+.podium-player a:hover{color:var(--metal)}
+.podium-profile{font-size:.5625rem;color:var(--muted);display:block;overflow-wrap:anywhere;margin-top:5px}
+.podium-stars{font:400 2.8rem/1.25 var(--display);color:var(--metal);letter-spacing:1px;margin:16px 0 1px}
+.podium-gold .podium-stars{font-size:3.3rem}
+.podium-stars small{font-size:.65em;vertical-align:middle}
+.podium-stars-label{font-size:.4375rem;letter-spacing:1.5px;color:var(--muted)}
+.podium-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;border-top:1px solid #59492f;margin-top:20px;padding-top:15px}
+.podium-numbers strong{display:block;font:400 1.4rem/1.3 var(--display);color:var(--metal)}
+.podium-numbers span{display:block;font-size:.4375rem;color:var(--muted);line-height:1.6;overflow-wrap:anywhere;margin-top:3px}
+.podium-tie{display:inline-block;border:1px solid var(--metal-dark);padding:4px 7px;font-size:.4375rem;color:var(--metal);letter-spacing:.5px;margin:13px 0 0;max-width:100%;overflow-wrap:anywhere}
+.podium-step{height:77px;border:1px solid var(--metal-dark);border-bottom:0;margin:0 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;background:linear-gradient(115deg,var(--step),var(--metal-glow),var(--step));color:var(--metal);clip-path:polygon(6% 0,94% 0,100% 100%,0 100%)}
+.podium-gold .podium-step{height:121px;margin:0 6px}
+.podium-bronze .podium-step{height:64px}
+.podium-position{font:400 2.9rem/1 var(--display);text-shadow:0 2px 12px #0003}
+.podium-gold .podium-position{font-size:4.4rem}
+.podium-step small{font-size:.375rem;font-weight:750;letter-spacing:2px;margin-top:5px}
+.podium-note{font-size:.625rem;color:var(--gold);line-height:1.8;margin:12px 0 0}
+html:not([data-theme="dark"]) .podium-stage{--podium-edge:var(--soft-line);background:radial-gradient(ellipse at 50% 5%,#bd83151a,transparent 70%),var(--surface);border-bottom-color:#9b6b20}
+html:not([data-theme="dark"]) .podium-card{--metal:#46576b;--metal-dark:#98a6b6;--step:#e3e8ef;--metal-glow:#839fc82b}
+html:not([data-theme="dark"]) .podium-gold{--metal:#805307;--metal-dark:#b18b44;--metal-glow:#d6a93e2b;--step:#e7d3a2}
+html:not([data-theme="dark"]) .podium-bronze{--metal:#83441f;--metal-dark:#b38262;--metal-glow:#ba805329;--step:#e3c1a8}
+html:not([data-theme="dark"]) .podium-body{background:radial-gradient(ellipse at 50% 0,var(--metal-glow),transparent 80%),var(--surface)}
+html:not([data-theme="dark"]) .podium-numbers{border-color:var(--line)}
+@media(max-width:1100px){.podium-stage{gap:12px;padding:35px 16px 0}.podium-body{padding:20px 12px}.podium-gold .podium-body{padding:25px 15px}.podium-player{font-size:.875rem}.podium-gold .podium-player{font-size:1rem}}
+@media(max-width:900px){.podium-stage{grid-template-columns:1fr;gap:25px;padding:25px 18px 0}.podium-card,.podium-gold,.podium-silver,.podium-bronze{grid-column:1;grid-row:auto}.podium-gold{order:0}.podium-silver{order:1}.podium-bronze{order:2}.podium-honor{font-size:.625rem;margin-bottom:10px}.podium-medallion{width:76px;height:82px;margin-bottom:5px}.podium-medallion svg{width:40px;height:45px}.podium-gold .podium-medallion{width:95px;height:100px}.podium-gold .podium-medallion svg{width:50px;height:57px}.podium-body,.podium-gold .podium-body{padding:20px 18px}.podium-player,.podium-gold .podium-player{font-size:1.125rem}.podium-stars,.podium-gold .podium-stars{font-size:2.8rem;margin-top:10px}.podium-profile{font-size:.625rem}.podium-numbers strong{font-size:1.6rem}.podium-numbers span{font-size:.5rem}.podium-tie{font-size:.5rem}.podium-step,.podium-gold .podium-step,.podium-bronze .podium-step{height:55px;margin:0 10px}.podium-gold .podium-step{height:72px}.podium-position,.podium-gold .podium-position{font-size:2.5rem}.podium-step small{font-size:.375rem;margin-top:3px}.podium-stage.is-empty{padding:18px}}

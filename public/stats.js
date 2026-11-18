@@ -36,6 +36,13 @@ export function outcome(war) {
   return diff > 0 ? 'Vitória' : diff < 0 ? 'Derrota' : 'Empate';
 }
 
+// Mantém a ordem do ranking; identifica empates antes do desempate alfabético.
+export function podiumHighlights(players) {
+  const eligible = players.filter(p => p.attacks > 0);
+  const equal = (a,b) => a.stars === b.stars && a.triples === b.triples && a.averageDamage === b.averageDamage && a.attacks === b.attacks;
+  return eligible.slice(0,3).map((player,index) => ({ ...player,slot:index+1,tiedWith:eligible.filter(other=>other.tag!==player.tag && equal(player,other)).length }));
+}
+
 export function mergedHistory(observed = [], log = []) {
   const map = new Map();
   for (const war of log) {
