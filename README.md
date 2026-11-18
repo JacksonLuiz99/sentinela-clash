@@ -43,7 +43,7 @@ A tipografia usa unidades relativas para que o controle afete todas as seções.
 
 ## Família TIGERS: seleção de clã
 
-O seletor oferece os oito clãs confirmados na API:
+O seletor oferece os dez clãs confirmados na API:
 
 | Clã | Tag |
 | --- | --- |
@@ -55,6 +55,8 @@ O seletor oferece os oito clãs confirmados na API:
 | TIGERS OF WAR 8 | #28R20CPP8 |
 | TOW FORMATION | #2GY9JPQY2 |
 | TIGERS OF WAR 3 | #QC9RY8GJ |
+| TOW-eVolution™ | #2LUJ0V08L |
+| TOW ACADEMY | #2QLGRU29U |
 
 A última escolha fica na chave `tigers-last-clan` do localStorage, independentemente do tema e da fonte. Uma preferência inválida retorna ao TIGERS OF WAR 4. A troca cancela a consulta anterior, limpa os dados exibidos e verifica a tag da resposta antes de atualizar a tela. O botão para abrir o clã no jogo também acompanha a seleção.
 

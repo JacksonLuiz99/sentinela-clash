@@ -34,10 +34,12 @@ function mockFamilyApi() {
 }
 function env(DB){return {DB,CLAN_TAG:DEFAULT_CLAN,CLASH_API_TOKEN:'test-secret',TELEGRAM_BOT_TOKEN:'123:secret',TELEGRAM_CHAT_ID:'-123',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/secret'};}
 
-test('catálogo contém os oito clãs e valida preferências antigas e novas',()=>{
-  assert.equal(CLANS.length,8);assert.equal(preferredClan(a.toLowerCase()),a);
+test('catálogo contém os dez clãs e valida preferências antigas e novas',()=>{
+  assert.equal(CLANS.length,10);assert.equal(preferredClan(a.toLowerCase()),a);
   assert.equal(findClan('#2GY9JPQY2').name,'TOW FORMATION');
   assert.equal(preferredClan('#qc9ry8gj'),'#QC9RY8GJ');
+  assert.equal(findClan('#2LUJ0V08L').name,'TOW-eVolution™');
+  assert.equal(preferredClan('#2qlgru29u'),'#2QLGRU29U');
   assert.equal(preferredClan('javascript:alert(1)'),DEFAULT_CLAN);
   assert.equal(preferredClan('#UNKNOWN'),DEFAULT_CLAN);assert.equal(findClan(null),null);
 });
