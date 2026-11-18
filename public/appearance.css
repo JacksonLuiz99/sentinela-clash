@@ -1,0 +1,61 @@
+:root{font-size:calc(100% * var(--font-scale,1));--toolbar-bg:#141516;--toolbar-field:#0c0d0e;--toolbar-line:#49423b;--soft:#231c16;--soft-line:#49311f;--hover:#27211c;--accent-hover:#ffab65;--button-text:#17110c;--track:#34302b;--enemy:#998879;--bar-bg:#0c0d0ef5}
+html[data-font-size="90"]{--font-scale:.9}html[data-font-size="100"]{--font-scale:1}html[data-font-size="110"]{--font-scale:1.1}html[data-font-size="120"]{--font-scale:1.2}html[data-font-size="130"]{--font-scale:1.3}html[data-font-size="140"]{--font-scale:1.4}
+html[data-theme="light"]{color-scheme:light;--bg:#f4f5f6;--surface:#fff;--surface2:#e9ecef;--line:#d1d4d8;--text:#181b20;--muted:#59616b;--orange:#b54b05;--gold:#825312;--green:#356029;--red:#a82f25;--toolbar-bg:#e9ecef;--toolbar-field:#fff;--toolbar-line:#a7afb7;--soft:#fff1e5;--soft-line:#d9b99b;--hover:#f8e5d3;--accent-hover:#963d00;--button-text:#fff;--track:#d7d4d0;--enemy:#7b7066;--bar-bg:#f4f5f6f5}
+html[data-theme="comfortable"]{color-scheme:light;--bg:#e9dfcc;--surface:#f3ead9;--surface2:#e2d5bf;--line:#c6b69e;--text:#3b3229;--muted:#6d5e4c;--orange:#925017;--gold:#7d531c;--green:#4b612f;--red:#963e2c;--toolbar-bg:#e2d5bf;--toolbar-field:#f3ead9;--toolbar-line:#b2a087;--soft:#e9d7bd;--soft-line:#bea07b;--hover:#e0cbac;--accent-hover:#773b0d;--button-text:#fff7e9;--track:#cabb9f;--enemy:#8c7a61;--bar-bg:#e9dfccf5}
+.reading-toolbar{background:var(--toolbar-bg);border-bottom:1px solid var(--line)}
+.reading-inner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-top:11px;padding-bottom:11px}
+.reading-caption{font-size:.6875rem;color:var(--muted);letter-spacing:.03em}
+.reading-controls{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.theme-control{display:flex;flex-direction:row;align-items:center;gap:9px;font-size:.6875rem}
+.theme-control select{min-width:135px;width:auto;min-height:38px;padding:7px 11px;font-size:.6875rem;background:var(--toolbar-field);color:var(--text);border-color:var(--toolbar-line)}
+.font-controls{display:flex;align-items:center;gap:5px}
+.font-controls button{min-width:38px;min-height:38px;border:1px solid var(--toolbar-line);background:var(--toolbar-field);color:var(--text);font-size:.8125rem;font-weight:650;padding:6px 8px}
+.font-controls button:hover:not(:disabled){background:var(--hover);border-color:var(--orange)}
+.font-controls button:disabled{opacity:.4;cursor:default}
+.font-controls output{min-width:49px;text-align:center;font-size:.6875rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hero-art--poster{margin:22px 0;height:475px;align-self:center;isolation:isolate}
+.hero-art--poster>img{width:auto;height:100%;max-height:475px;max-width:100%;object-fit:contain;transform:none;filter:none;border:1px solid #695344;background:#101010;box-shadow:0 12px 40px #0005}
+.hero-art--poster:after{display:none}
+.brand .clan-avatar,.join-banner .clan-avatar{object-fit:cover;object-position:center 43%;border:1px solid var(--soft-line);border-radius:4px}
+.hero-art--poster:before{background:radial-gradient(ellipse at center,#a65b2833 0%,transparent 70%)}
+.button{color:var(--button-text)}.button:hover{background:var(--accent-hover)}
+.outline-button{border-color:var(--toolbar-line)}.outline-button:hover{background:var(--hover)}
+.command-bar{background:var(--bar-bg)}
+input,select{background:var(--toolbar-field);border-color:var(--toolbar-line)}
+.refresh-button{border-color:var(--toolbar-line)}
+html:not([data-theme="dark"]) .hero-meta,html:not([data-theme="dark"]) .clan-strip small,html:not([data-theme="dark"]) .footnote,html:not([data-theme="dark"]) .status{color:var(--muted)}
+html:not([data-theme="dark"]) .hero-meta span+span:before{color:var(--muted)}
+html:not([data-theme="dark"]) .tag{background:var(--soft);border-color:var(--soft-line);color:var(--orange)}
+html:not([data-theme="dark"]) .tag.good{background:#dce9d0;border-color:#91a67e;color:var(--green)}
+html:not([data-theme="dark"]) .tag.bad{background:#f5ddd3;border-color:#bf9181;color:var(--red)}
+html:not([data-theme="dark"]) .tag.neutral{background:var(--surface2);border-color:var(--line);color:var(--muted)}
+html:not([data-theme="dark"]) .battle{background:radial-gradient(ellipse at 50% 0,#ba671410,transparent 65%),var(--surface)}
+html:not([data-theme="dark"]) .war-team.enemy .war-team-score{color:var(--enemy)}
+html:not([data-theme="dark"]) .versus{color:var(--muted)}
+html:not([data-theme="dark"]) progress,html:not([data-theme="dark"]) progress::-webkit-progress-bar{background:var(--track)}
+html:not([data-theme="dark"]) .war-progress .enemy progress::-webkit-progress-value{background:var(--enemy)}
+html:not([data-theme="dark"]) .war-progress .enemy progress::-moz-progress-bar{background:var(--enemy)}
+html:not([data-theme="dark"]) .pending-item{background:var(--soft);border-color:var(--soft-line)}
+html:not([data-theme="dark"]) .war-participants .member-hit{border-color:var(--line)}
+html:not([data-theme="dark"]) .warrior-card{background:linear-gradient(130deg,var(--soft),var(--surface) 65%);border-color:var(--soft-line)}
+html:not([data-theme="dark"]) .warrior-card:first-child{border-top-color:var(--orange)}
+html:not([data-theme="dark"]) .warrior-rank{color:#9c54151a}
+html:not([data-theme="dark"]) .warrior-stats{border-color:var(--soft-line)}
+html:not([data-theme="dark"]) .event-icon{background:var(--soft)}
+html:not([data-theme="dark"]) th{border-color:var(--soft-line)}
+html:not([data-theme="dark"]) .clan-description{color:var(--muted)}
+html:not([data-theme="dark"]) .requirements span{border-color:var(--soft-line)}
+html:not([data-theme="dark"]) .donor>span{color:var(--gold)}
+html:not([data-theme="dark"]) .join-banner{background:linear-gradient(115deg,var(--soft),var(--surface));border-color:var(--soft-line)}
+html:not([data-theme="dark"]) .developer{border-color:var(--line)}
+.hero-copy,.hero-actions,.hero-meta,.section-heading,.war-team,.warrior-card{min-width:0}
+.hero-meta{flex-wrap:wrap;row-gap:8px}
+.hero-actions>button,.hero-actions>a{white-space:normal;text-align:center}
+.history-row{flex-wrap:wrap}.history-opponent{flex:1;min-width:130px}
+.channel-card h3{overflow-wrap:anywhere}.panel-head{flex-wrap:wrap}
+.war-team-name{max-width:100%}.pending-head{flex-wrap:wrap}
+.warrior-stats{flex-wrap:wrap;row-gap:10px}.warrior-stats>div{min-width:0}
+.requirements span{overflow-wrap:anywhere}.hero-copy h1{overflow-wrap:normal}
+@media(max-width:1100px){.hero-art--poster{height:425px}.hero-art--poster>img{width:auto;height:100%;max-width:100%;transform:none}.hero-copy h1{font-size:3.625rem}}
+@media(max-width:760px){.reading-caption{display:none}.reading-inner{justify-content:center}.reading-controls{justify-content:center;gap:12px}.theme-control{font-size:.625rem}.theme-control select{min-width:125px;font-size:.625rem}.hero{grid-template-columns:1fr}.hero-copy{padding-bottom:20px}.hero-art--poster{position:relative;justify-self:center;right:auto;top:auto;width:100%;height:365px;opacity:1;z-index:0;margin:0 auto 30px}.hero-art--poster>img{width:auto;height:100%;max-width:100%;transform:none;opacity:1}.hero-copy h1{font-size:3.5rem}.hero .eyebrow{white-space:normal}.hero-meta{max-width:none}.war-mission{gap:10px}.war-team-name{min-height:0}.warrior-card{grid-template-columns:1fr}.warrior-stats{grid-column:1;grid-row:auto;border-left:0;border-top:1px solid var(--soft-line);padding:12px 0 0;margin-top:5px;justify-content:space-between}.warrior-card h3{font-size:1rem}.section-heading{flex-wrap:wrap}.section-heading>.text-button{text-align:left;max-width:none}.header-actions .button{max-width:145px}.brand small{white-space:normal}.history-score{margin-left:auto}.join-actions{flex-wrap:wrap}.channel-card .button{white-space:normal}.tag{white-space:normal}.war-mission strong{overflow-wrap:anywhere}.join-banner{grid-template-columns:1fr}.join-banner>img{display:none}.join-actions{grid-column:1}.filters{align-items:stretch}}
+@media(max-width:420px){.reading-controls{gap:10px;width:100%;justify-content:space-between}.theme-control{gap:6px}.theme-control select{min-width:110px}.font-controls{gap:3px}.font-controls button{min-width:34px;padding:5px}.font-controls output{min-width:40px}.hero-art--poster{position:relative;right:auto;top:auto;opacity:1;z-index:0;width:100%;height:340px}.hero-art--poster>img{max-width:100%;height:100%;width:auto}.hero-copy h1{font-size:3.125rem}.site-header{gap:10px}.header-actions .button{max-width:110px}.brand>span{font-size:.875rem}.war-score{gap:8px}.war-team-score{font-size:2.5rem}.war-team img{width:38px;height:42px}.versus{font-size:.875rem}}

@@ -35,6 +35,12 @@ Os endpoints `warlog` e `capitalraidseasons` são consultados no máximo uma vez
 
 Links públicos são variáveis do Worker: `DISCORD_PUBLIC_URL` e `TELEGRAM_PUBLIC_URL`. A API valida os domínios e nunca reutiliza a URL secreta do webhook como convite. O link do Telegram abre o bot; ele não cadastra automaticamente novos destinatários. Atualmente os avisos são enviados ao chat e ao canal configurados pelo administrador.
 
+## Preferências de leitura e imagem do clã
+
+O cabeçalho oferece temas Escuro (padrão), Claro e Confortável (sépia), além de controles de fonte entre 90% e 140% e restauração para 100%. A escolha é guardada somente no navegador (`localStorage`, chave `tigers-display`) e aplicada antes da primeira renderização. Os controles continuam funcionando se o armazenamento estiver indisponível. Valores persistidos inválidos retornam ao padrão. Atualizações entre abas sincronizam as preferências.
+
+A tipografia usa unidades relativas para que o controle afete todas as seções. A arte enviada pelo usuário está preservada sem alterações em `public/images/tigers-of-war.png`, com enquadramento por CSS no cabeçalho e exibição integral no destaque principal. O antigo emblema vetorial permanece como fallback para dados sem brasão e ícone da aplicação.
+
 ## Arquitetura e custo
 
 ```text
