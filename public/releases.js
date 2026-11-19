@@ -1,6 +1,17 @@
 // Datas históricas vêm dos registros das mudanças; não representam necessariamente o minuto exato do deploy.
 export const RELEASES = Object.freeze([
   {
+    "version": "2026.11.19.16",
+    "recordedAt": "2026-11-19T18:09:38.000Z",
+    "title": "Ajustes de leitura no computador e no celular",
+    "changes": [
+      "No computador, o cartão de Meu início tem largura confortável para leitura.",
+      "Ao trocar a tag, o seu cartão continua visível enquanto você digita a nova.",
+      "O painel fica mais limpo no celular, sem o aviso antigo do navegador."
+    ],
+    "section": "player"
+  },
+  {
     "version": "2026.11.19.15",
     "recordedAt": "2026-11-19T17:44:04.000Z",
     "title": "Painel mais direto para quem joga",

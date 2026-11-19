@@ -1,4 +1,4 @@
-.player-status{margin-top:8px}
+.player-status{margin-top:8px;max-width:760px}
 .player-invite{display:grid;gap:12px;margin-bottom:20px;border-top:3px solid var(--gold)}
 .player-invite p{margin:0;line-height:1.6}
 .player-invite .button{min-height:44px}
@@ -16,7 +16,7 @@
 .player-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .player-actions .outline-button,.player-actions .button{min-height:44px}
 .player-missions+.button,.player-card>.button{justify-self:start;min-height:44px}
-.player-form{display:grid;gap:14px;margin-bottom:16px}
+.player-form{display:grid;gap:14px;margin-bottom:16px;max-width:760px}
 .player-form h3{font-family:var(--display);font-size:1.5rem;margin:0}
 .player-form label{font-size:.9rem;color:var(--muted);display:grid;gap:8px}
 .player-form input{font-size:1.1rem;letter-spacing:.5px}

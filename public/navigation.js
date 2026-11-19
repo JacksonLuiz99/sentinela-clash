@@ -33,6 +33,9 @@ export function initNavigation() {
     const setMore=open=>{moreMenu.hidden=!open;moreToggle.setAttribute('aria-expanded',String(open));};
     moreToggle.addEventListener('click',()=>setMore(moreMenu.hidden));
     moreMenu.addEventListener('click',e=>{if(e.target.closest('[data-nav-group]'))setMore(false);});
+    // Toque fora do menu ou Esc fecham o menu "Mais", sem precisar tocar de novo no botão.
+    document.addEventListener('click',e=>{if(!moreMenu.hidden && !e.target.closest('#mobile-more,#mobile-more-toggle'))setMore(false);});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape' && !moreMenu.hidden)setMore(false);});
   }
   document.querySelectorAll('[data-nav-section]').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.navSection);if(b.closest('#mobile-bottom-nav'))requestAnimationFrame(()=>$(b.dataset.navSection)?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));}));
   $('section-select').addEventListener('change',e=>show(e.target.value));

@@ -155,7 +155,7 @@ export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, da
     }
     const current = payload?.current;
     const recent = Boolean(current?.warCapturedAt) && warIsRecent(getSelectedClan(), current.warCapturedAt, now(), defaultTag);
-    const s = playerStatus({tag: showForm ? null : tag, clan, war: current?.war, recent, now: now()});
+    const s = playerStatus({tag, clan, war: current?.war, recent, now: now()});
     if (s.kind === 'member') s.achievements = playerAchievements({tag, clan, war: current?.war, wars: payload?.wars || [], recent});
     status.innerHTML = statusHtml(s);
   }
