@@ -90,7 +90,7 @@ test('lease impede duas coletas simultâneas',async()=>{
   const r=await synchronize({DB,CLASH_API_TOKEN:'test'},now);assert.equal(r.code,'sync_busy');DB.close();
 });
 test('rota pública não vaza credenciais; sincronização exige autenticação',async()=>{
-  const DB=database();const env={DB,CLAN_TAG:tag,CLASH_API_TOKEN:'test-secret',ADMIN_TOKEN:'x'.repeat(32),TELEGRAM_BOT_TOKEN:'123:secret',TELEGRAM_CHAT_ID:'-999',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/secret',PUBLIC_ORIGIN:'https://panel.vercel.app'};
+  const DB=database();const env={DB,CLAN_TAG:tag,CLASH_API_TOKEN:'test-secret',ADMIN_TOKEN:'x'.repeat(32),DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/secret',PUBLIC_ORIGIN:'https://panel.vercel.app'};
   const response=await route(new Request('https://api.test/api/dashboard',{headers:{Origin:'https://panel.vercel.app'}}),env);
   assert.equal(response.headers.get('Access-Control-Allow-Origin'),'https://panel.vercel.app');
   const body=await response.text();assert.ok(!body.includes('secret'));assert.ok(!body.includes('-999'));
@@ -103,17 +103,16 @@ test('Discord desativa menções e não inclui segredo no erro',async()=>{
   assert.deepEqual(body.allowed_mentions,{parse:[]});
 });
 test('entrega confirmada em um canal não se repete quando o outro falha',async()=>{
-  const DB=database();let current=clan();const sent={telegram:0,discord:0};
-  const env={DB,CLAN_TAG:tag,CLASH_API_TOKEN:'test',TELEGRAM_BOT_TOKEN:'123:test',TELEGRAM_CHAT_ID:'-123',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/test'};
+  const DB=database();let current=clan();const sent={discord:0};
+  const env={DB,CLAN_TAG:tag,CLASH_API_TOKEN:'test',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/test'};
   const api=async url=>url.endsWith('/leaguegroup')?Response.json({},{status:404}):url.endsWith('/currentwar')?Response.json({state:'notInWar'}):Response.json(current);
   globalThis.fetch=async(url,options)=>{
-    if(url.includes('api.telegram.org')){sent.telegram++;return Response.json({ok:true});}
     if(url.includes('discord.com')){sent.discord++;return Response.json({},{status:sent.discord===1?500:200});}
     return api(url,options);
   };
   await synchronize(env,now);current=clan();current.memberList.push(member('#CCC','Cris'));
   await synchronize(env,now+300000);await synchronize(env,now+600000);
-  assert.deepEqual(sent,{telegram:1,discord:2});DB.close();
+  assert.deepEqual(sent,{discord:2});DB.close();
 });
 test('guerra da Liga é encontrada mesmo com o clã no segundo lado',async()=>{
   const reversed=war();[reversed.clan,reversed.opponent]=[reversed.opponent,reversed.clan];

@@ -34,7 +34,7 @@ test('histórico unifica resumo da API e dados detalhados sem repetir resultado'
 test('links públicos aceitam convite e recusam webhook e scripts',()=>{
   assert.equal(publicLinks({DISCORD_PUBLIC_URL:'https://discord.gg/EmJeAWjBg'}).discord,'https://discord.gg/EmJeAWjBg');
   assert.equal(publicLinks({DISCORD_PUBLIC_URL:'https://discord.com/api/webhooks/123/secret'}).discord,null);
-  assert.equal(publicLinks({TELEGRAM_PUBLIC_URL:'javascript:alert(1)'}).telegram,null);
+  assert.equal(publicLinks({DISCORD_PUBLIC_URL:'javascript:alert(1)'}).discord,null);
 });
 
 test('pódio destaca até três guerreiros com ataques e não preenche vagas fictícias',()=>{

@@ -72,20 +72,15 @@ export async function loadWar(env, now) {
 }
 
 function channels(env) {
-  const allowed = (env.ALERT_CHANNELS || 'telegram,discord').split(',');
-  return [env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID && allowed.includes('telegram') ? 'telegram' : null,
-    env.DISCORD_WEBHOOK_URL && allowed.includes('discord') ? 'discord' : null].filter(Boolean);
+  const allowed = (env.ALERT_CHANNELS || 'discord').split(',');
+  return [env.DISCORD_WEBHOOK_URL && allowed.includes('discord') ? 'discord' : null].filter(Boolean);
 }
 
 export async function sendAlert(env, channel, message) {
   // Limita a mensagem sem HTML/Markdown e impede menções de nomes vindos do jogo.
   const content = message.length > 1800 ? message.slice(0,1740)+'… Consulte a lista completa no painel.' : message;
   let url, body;
-  if (channel === 'telegram') {
-    if (!/^\d+:[A-Za-z0-9_-]+$/.test(env.TELEGRAM_BOT_TOKEN || '')) throw new Error('channel_configuration');
-    url = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-    body = { chat_id: env.TELEGRAM_CHAT_ID, text: content, link_preview_options: { is_disabled: true } };
-  } else if (channel === 'discord') {
+  if (channel === 'discord') {
     if (!/^https:\/\/discord\.com\/api(?:\/v\d+)?\/webhooks\/\d+\/[A-Za-z0-9_-]+$/.test(env.DISCORD_WEBHOOK_URL || '')) throw new Error('channel_configuration');
     url = env.DISCORD_WEBHOOK_URL+'?wait=true';
     body = { content, allowed_mentions: { parse: [] } };
@@ -94,10 +89,6 @@ export async function sendAlert(env, channel, message) {
   try { response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(10000) }); }
   catch { throw new Error('channel_network'); }
   if (!response.ok) throw new Error(`channel_http_${response.status}`);
-  if (channel === 'telegram') {
-    const result = await response.json();
-    if (!result.ok) throw new Error('channel_rejected');
-  }
 }
 
 export async function deliver(env, now) {

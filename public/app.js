@@ -46,7 +46,7 @@ function clearClanData() {
   renderWar(null);$('war-state').textContent = 'CARREGANDO';$('war-summary').innerHTML = empty('Consultando a guerra deste clã…');
   renderMembers();$('member-count').textContent = '— GUERREIROS';renderRankings();renderHistory();renderCapital({});
   renderEvents([],'events');renderEvents([],'recent');$('donors').innerHTML = empty('Consultando doações deste clã…');
-  for (const channel of ['telegram','discord']) {$(`${channel}-state`).textContent='CARREGANDO';$(`${channel}-state`).classList.remove('good');$(`${channel}-info`).textContent='Consultando a configuração deste clã…';}
+  for (const channel of ['discord']) {$(`${channel}-state`).textContent='CARREGANDO';$(`${channel}-state`).classList.remove('good');$(`${channel}-info`).textContent='Consultando a configuração deste clã…';}
   $('status').textContent = `CARREGANDO ${findClan(selectedClan)?.name || selectedClan} · Os dados são separados por clã.`;
   $('setup').hidden = true;
 }
@@ -71,8 +71,8 @@ function openClanSection(tag,section,anchor){
 }
 
 function renderLinks(links) {
-  const safe = publicLinks({DISCORD_PUBLIC_URL:links?.discord,TELEGRAM_PUBLIC_URL:links?.telegram});
-  for (const channel of ['telegram','discord']) document.querySelectorAll(`[data-link="${channel}"]`).forEach(a => {a.hidden = !safe[channel];if(safe[channel]) a.href = safe[channel];});
+  const safe = publicLinks({DISCORD_PUBLIC_URL:links?.discord});
+  for (const channel of ['discord']) document.querySelectorAll(`[data-link="${channel}"]`).forEach(a => {a.hidden = !safe[channel];if(safe[channel]) a.href = safe[channel];});
   $('discord-link-note').hidden = Boolean(safe.discord);
 }
 function renderEvents(events,id) {
@@ -188,7 +188,7 @@ function render(payload) {
     $('donation-total').textContent = `${num(clan.memberList.reduce((n,m) => n+(m.donations || 0),0))} tropas doadas pelos membros atuais nesta temporada.`;
   }
   management?.render();intelligence?.render();player?.render();renderRankings();renderHistory();renderEvents(data.events || [],'events');renderEvents((data.events || []).slice(0,4),'recent');
-  for (const channel of ['telegram','discord']) {
+  for (const channel of ['discord']) {
     const enabled = data.channels?.[channel];const delivery = data.delivery?.find(d => d.channel === channel);
     $(`${channel}-state`).textContent = enabled?'AVISOS ATIVOS':'AGUARDANDO CONEXÃO';
     $(`${channel}-state`).classList.toggle('good',Boolean(enabled));
@@ -259,7 +259,7 @@ whatsapp = initWhatsApp({getSelectedClan:()=>selectedClan,apiBase:()=>window.CLA
 initAttention({escape:esc,date,openClanSection,showFamily:()=>tab('family',true)});
 management = initManagement({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 intelligence = initIntelligence({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
-player = initPlayer({getData:()=>data,getSelectedClan:()=>selectedClan,defaultTag:DEFAULT_CLAN,escape:esc,date,playerLink,openWar:()=>tab('overview',true)});
+player = initPlayer({getData:()=>data,getSelectedClan:()=>selectedClan,defaultTag:DEFAULT_CLAN,escape:esc,date,playerLink,openWar:()=>tab('overview',true),apiBase:()=>window.CLAN_CONFIG?.apiBase || '',switchClan:tag=>{switchClan(tag);tab('player',true);}});
 initVersions({escape:esc,openSection:section=>tab(section,true)});
 initPwa({getSelectedClan:()=>selectedClan,apiBase:()=>window.CLAN_CONFIG?.apiBase || '',showSettings:()=>{tab('alerts',true);$('push-panel').scrollIntoView({block:'start'});}});
 $('refresh').addEventListener('click',()=>{refresh();intelligence?.refresh();});switchClan(selectedClan,Boolean(incoming.tag));if(incoming.view)tab(incoming.view);

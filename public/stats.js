@@ -60,9 +60,7 @@ export function mergedHistory(observed = [], log = []) {
 
 export function publicLinks(env) {
   const discord = env.DISCORD_PUBLIC_URL || '';
-  const telegram = env.TELEGRAM_PUBLIC_URL || 'https://t.me/tigers_of_war4_alertas_bot';
   return {
-    discord: /^https:\/\/(?:discord\.gg\/[A-Za-z0-9-]+|discord\.com\/(?:invite\/[A-Za-z0-9-]+|channels\/\d+\/\d+))$/.test(discord) ? discord : null,
-    telegram: /^https:\/\/t\.me\/(?:[A-Za-z0-9_]+|\+[A-Za-z0-9_-]+)$/.test(telegram) ? telegram : null
+    discord: /^https:\/\/(?:discord\.gg\/[A-Za-z0-9-]+|discord\.com\/(?:invite\/[A-Za-z0-9-]+|channels\/\d+\/\d+))$/.test(discord) ? discord : null
   };
 }

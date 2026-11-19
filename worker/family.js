@@ -12,7 +12,7 @@ function responseFor(env, tag, saved, now = Date.now()) {
     wars:saved?.wars || [], events:saved?.events || [], extras:saved?.extras || null,
     timeline:saved?.timeline || [], coverageStartedAt:saved?.coverageStartedAt || saved?.current?.capturedAt || null,
     baseline:saved?.snapshots?.filter(s => s.capturedAt <= now-86400000).sort((a,b)=>b.capturedAt-a.capturedAt)[0] || null,
-    channels:{telegram:false,discord:false},delivery:[],links:publicLinks(env)
+    channels:{discord:false},delivery:[],links:publicLinks(env)
   };
 }
 
@@ -106,6 +106,24 @@ export async function recordPrimarySummary(env,now=Date.now()) {
   const next=dailyTimeline(timeline || [],current.clan,current.capturedAt);
   await recordRoster(env,current.clan,current.capturedAt);
   await env.DB.batch([stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,{current,health})),stateStatement(env.DB,'timeline',next)]);
+}
+// Procura uma tag nos registros já coletados de todos os clãs. Só lê o banco; não consulta a API do jogo.
+const PLAYER_TAG=/^#[0289PYLQGRJCUV]{3,15}$/;
+export function isPlayerTag(value){return typeof value==='string' && PLAYER_TAG.test(value);}
+export async function locatePlayer(env,playerTag,now=Date.now()){
+  const rows=await env.DB.prepare("SELECT key,value FROM state WHERE key='current' OR key LIKE 'family:%'").all();
+  const matches=[];
+  for(const row of rows.results){
+    const saved=JSON.parse(row.value);
+    const isPrimary=row.key==='current';
+    const clan=isPrimary?saved?.clan:saved?.current?.clan;
+    const capturedAt=isPrimary?saved?.capturedAt:saved?.current?.capturedAt;
+    const clanTag=isPrimary?env.CLAN_TAG:row.key.slice('family:'.length);
+    const member=clan?.memberList?.find(m=>m.tag===playerTag);
+    if(member)matches.push({clanTag,clanName:clan.name || findClan(clanTag)?.name || clanTag,role:member.role,townHallLevel:member.townHallLevel ?? null,capturedAt:capturedAt ?? null});
+  }
+  matches.sort((a,b)=>(b.capturedAt||0)-(a.capturedAt||0));
+  return {player:playerTag,checkedAt:now,matches};
 }
 export async function familyOverview(env,now=Date.now()) {
   const [rows,goalRows]=await Promise.all([

@@ -31,7 +31,7 @@ Node >=22.13 (CI uses Node 24). Dependencies: `npm ci`.
 
 **Pure logic is shared.** `worker/events.js` (event detection, pending attacks, war orientation, game time) is used by both the collector and the tests. `public/clans.js` and `public/stats.js` are also imported by the Worker, so the catalog and links live in one place for both sides.
 
-**Alert channels.** Telegram and Discord are sent from `monitor.js`. They use a `deliveries` retry queue, with at most four attempts per collection. Web Push (`worker/push.js`) is a separate path with its own D1 queue, validates the war again before sending, processes three jobs per minute, and removes subscriptions the push service reports as expired. Keep the two paths independent: a push failure must not block the main collection.
+**Alert channels.** Discord is the only alert channel, sent from `monitor.js`. They use a `deliveries` retry queue, with at most four attempts per collection. Web Push (`worker/push.js`) is a separate path with its own D1 queue, validates the war again before sending, processes three jobs per minute, and removes subscriptions the push service reports as expired. Keep the two paths independent: a push failure must not block the main collection.
 
 **Auth.** `authorized()` in `worker/index.js` compares SHA-256 digests of the Bearer token in constant time. `LEADERSHIP_TOKEN` guards the POST routes in `worker/management.js`, and `ADMIN_TOKEN` guards `/api/sync`. Push operations use a per-browser credential. Secrets are set with `wrangler secret put` and never go to Vercel or the browser.
 

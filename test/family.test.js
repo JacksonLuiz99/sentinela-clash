@@ -33,7 +33,7 @@ function mockFamilyApi() {
   };
   return calls;
 }
-function env(DB){return {DB,CLAN_TAG:DEFAULT_CLAN,CLASH_API_TOKEN:'test-secret',TELEGRAM_BOT_TOKEN:'123:secret',TELEGRAM_CHAT_ID:'-123',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/secret'};}
+function env(DB){return {DB,CLAN_TAG:DEFAULT_CLAN,CLASH_API_TOKEN:'test-secret',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/secret'};}
 
 test('catálogo contém os 16 clãs e valida preferências antigas e novas',()=>{
   assert.equal(CLANS.length,16);assert.equal(new Set(CLANS.map(c=>c.tag)).size,16);assert.equal(preferredClan(a.toLowerCase()),a);
@@ -57,7 +57,7 @@ test('dois clãs mantêm guerra, membros e histórico separados',async()=>{
 test('novos clãs não alteram dados nem fila de notificações do clã original',async()=>{
   const DB=database();const primary={clan:{tag:DEFAULT_CLAN},capturedAt:1};await stateStatement(DB,'current',primary).run();const calls=mockFamilyApi();
   const result=await familyDashboard(env(DB),a,now);assert.deepEqual(await readState(DB,'current'),primary);
-  assert.deepEqual(result.channels,{telegram:false,discord:false});assert.equal(result.monitoringMode,'automatic');assert.equal(result.collectionIntervalMinutes,15);
+  assert.deepEqual(result.channels,{discord:false});assert.equal(result.monitoringMode,'automatic');assert.equal(result.collectionIntervalMinutes,15);
   assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM deliveries').first()).n,0);
   assert.equal((await DB.prepare("SELECT until_ms FROM leases WHERE id='sync'").first()).until_ms,0);
   assert.ok(calls.every(c=>c.method==='GET' && !c.url.includes('telegram') && !c.url.includes('discord')));DB.close();

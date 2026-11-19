@@ -12,9 +12,8 @@
     "PUBLIC_ORIGIN": "https://tigers-family-tow.vercel.app",
     "LEGACY_PUBLIC_ORIGIN": "https://sentinela-clash.vercel.app",
     "DISCORD_PUBLIC_URL": "https://discord.gg/EmJeAWjBg",
-    "TELEGRAM_PUBLIC_URL": "https://t.me/tigers_of_war4_alertas_bot",
     "ALERT_TYPES": "member_join,member_leave,war_start,war_end,war_reminder",
-    "ALERT_CHANNELS": "telegram,discord"
+    "ALERT_CHANNELS": "discord"
   },
   "d1_databases": [{
     "binding": "DB", "database_name": "clan-monitor",

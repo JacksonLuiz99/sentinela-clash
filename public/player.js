@@ -77,10 +77,33 @@ export function writePlayerTag(tag, storage = globalThis.localStorage) {
   } catch { return false; }
 }
 
-export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, date, playerLink, openWar, now = () => Date.now()}) {
+export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, date, playerLink, openWar, apiBase = () => '', switchClan = () => {}, now = () => Date.now()}) {
   const $ = id => document.getElementById(id);
   const num = value => Number(value || 0).toLocaleString('pt-BR');
   let editing = false;
+  let locate = {tag: null, state: 'idle', matches: [], error: ''};
+
+  async function searchPlayer(tag) {
+    locate = {tag, state: 'loading', matches: [], error: ''};
+    render();
+    try {
+      const response = await fetch(`${apiBase()}/api/player-locate?player=${encodeURIComponent(tag)}`);
+      if (!response.ok) throw new Error('unavailable');
+      const data = await response.json();
+      locate = {tag, state: 'done', matches: data.matches || [], error: ''};
+    } catch {
+      locate = {tag, state: 'error', matches: [], error: 'Não foi possível procurar agora. Tente de novo em instantes.'};
+    }
+    render();
+  }
+
+  function locateHtml(tag) {
+    if (locate.tag !== tag) return '<button id="player-search" class="button" type="button">Procurar em todos os clãs</button>';
+    if (locate.state === 'loading') return '<p class="coverage">Procurando nos clãs da família…</p>';
+    if (locate.state === 'error') return `<p class="player-warning">${esc(locate.error)}</p><button id="player-search" class="outline-button" type="button">Tentar de novo</button>`;
+    if (!locate.matches.length) return '<p class="coverage">Não encontramos esta tag em nenhum clã da família nas últimas coletas. Confira a tag no seu perfil do jogo.</p>';
+    return `<ul class="player-locate-list">${locate.matches.map(m => `<li><span><strong>${esc(m.clanName)}</strong> · ${esc(ROLES[m.role] || m.role)}${m.capturedAt ? ` · coleta de ${esc(date(m.capturedAt))}` : ''}</span><button class="outline-button" type="button" data-switch-clan="${esc(m.clanTag)}">Ver neste clã</button></li>`).join('')}</ul><p class="coverage">Os dados vêm da última coleta de cada clã.</p>`;
+  }
   const formArea = $('player-form-area');
   const status = $('player-status');
 
@@ -112,7 +135,7 @@ export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, da
   function statusHtml(s) {
     if (s.kind === 'noData') return '<div class="panel empty">Aguardando os dados do clã selecionado.</div>';
     if (s.kind === 'choose') return '';
-    if (s.kind === 'notInClan') return `<div class="panel player-card"><p class="player-warning">Não encontramos ${esc(s.tag)} em ${esc(s.clanName)}. Confira a tag no seu perfil ou escolha o clã certo no seletor do topo.</p><div class="player-actions"><button id="player-change" class="outline-button" type="button">Trocar tag</button><button id="player-forget" class="text-button" type="button">Remover deste aparelho</button></div></div>`;
+    if (s.kind === 'notInClan') return `<div class="panel player-card"><p class="player-warning">Não encontramos ${esc(s.tag)} em ${esc(s.clanName)}. Confira a tag no seu perfil ou escolha o clã certo no seletor do topo.</p>${locateHtml(s.tag)}<div class="player-actions"><button id="player-change" class="outline-button" type="button">Trocar tag</button><button id="player-forget" class="text-button" type="button">Remover deste aparelho</button></div></div>`;
     const m = s.member;
     return `<article class="panel player-card"><p class="eyebrow">${esc(s.clanName)}</p><h3>${esc(m.name)}</h3><p class="coverage">CV ${num(m.townHallLevel)} · ${esc(ROLES[m.role] || m.role)} · <a href="${esc(playerLink(m.tag))}" target="_blank" rel="noopener noreferrer">Abrir perfil no jogo ↗</a></p>${warBlock(s.war)}${achievementsHtml(s.achievements)}<div class="player-actions"><button id="player-change" class="outline-button" type="button">Trocar tag</button><button id="player-forget" class="text-button" type="button">Remover deste aparelho</button></div></article>`;
   }
@@ -154,6 +177,10 @@ export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, da
     if (event.target.closest('#player-change')) {editing = true;formArea.innerHTML = formHtml(readPlayerTag(), '');render();$('player-tag-input')?.focus();}
     if (event.target.closest('#player-forget')) {writePlayerTag(null);editing = false;render();}
     if (event.target.closest('#player-open-war')) openWar();
+    const search = event.target.closest('#player-search');
+    if (search) {const tag = readPlayerTag(); if (tag) searchPlayer(tag);}
+    const target = event.target.closest('[data-switch-clan]');
+    if (target) {locate = {tag: null, state: 'idle', matches: [], error: ''}; switchClan(target.dataset.switchClan);}
   });
   setInterval(() => {if (!document.hidden && !editing) render();}, 30000);
   return {render};

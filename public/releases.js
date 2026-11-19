@@ -1,6 +1,27 @@
 // Datas históricas vêm dos registros das mudanças; não representam necessariamente o minuto exato do deploy.
 export const RELEASES = Object.freeze([
   {
+    "version": "2026.11.19.13",
+    "recordedAt": "2026-11-19T17:11:04.000Z",
+    "title": "Avisos agora chegam só pelo Discord",
+    "changes": [
+      "O canal do Telegram foi removido do painel. Os avisos automáticos continuam pelo Discord.",
+      "Nos avisos, o card e os links do Telegram não aparecem mais. Para acompanhar o clã, use o Discord ou o aplicativo instalado no celular."
+    ],
+    "section": "alerts"
+  },
+  {
+    "version": "2026.11.19.12",
+    "recordedAt": "2026-11-19T16:48:28.000Z",
+    "title": "Encontre seu clã na família",
+    "changes": [
+      "Se sua tag não estiver no clã selecionado, toque em Procurar em todos os clãs, em Meu início.",
+      "O painel mostra em quais clãs da família você aparece, com o cargo e a data da última coleta.",
+      "Toque em Ver neste clã para trocar o clã do painel e acompanhar sua situação na guerra."
+    ],
+    "section": "player"
+  },
+  {
     "version": "2026.11.19.11",
     "recordedAt": "2026-11-19T16:39:38.000Z",
     "title": "Suas conquistas aparecem no seu início",

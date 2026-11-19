@@ -1,9 +1,10 @@
 import { pushRoute, PushInputError, enqueuePush, deliverPush, collectPrimaryPush } from './push.js';
+import { saveChannel } from './channels.js';
 import { managementOverview, playerEvolution, clanManagement, saveManualWar, saveGoals, ValidationError } from './management.js';
 import { readState, synchronize } from './monitor.js';
 import { publicLinks } from '../public/stats.js';
 import { CLANS, DEFAULT_CLAN, findClan } from '../public/clans.js';
-import { familyDashboard, familyOverview, synchronizeFamily, recordPrimarySummary } from './family.js';
+import { familyDashboard, familyOverview, synchronizeFamily, recordPrimarySummary, locatePlayer, isPlayerTag } from './family.js';
 
 const json = (data,status=200,headers={}) => Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 
@@ -66,6 +67,20 @@ export async function route(request,env) {
   if(path === '/api/family' && request.method === 'GET') {
     try {return json(await familyOverview(env),200,headers);} catch {return json({error:'family_unavailable'},503,headers);}
   }
+  if (path === '/api/alert-channels') {
+    if (request.method !== 'POST') return json({error:'method_not_allowed'},405,headers);
+    if (!await authorized(request,env.LEADERSHIP_TOKEN)) return json({error:'Chave de liderança inválida.'},401,headers);
+    if (Number(request.headers.get('Content-Length') || 0) > 4096) return json({error:'Registro muito grande.'},413,headers);
+    let input;try {input=await request.json();} catch {return json({error:'Formulário inválido.'},400,headers);}
+    try {return json(await saveChannel(env,input?.clan,input?.webhook),200,headers);}
+    catch (error) {return json({error: error.message === 'invalid_webhook' ? 'Endereço de webhook inválido.' : 'Clã desconhecido.'},400,headers);}
+  }
+  if (path === '/api/player-locate') {
+    if (request.method !== 'GET') return json({error:'method_not_allowed'},405,headers);
+    const player=url.searchParams.get('player');
+    if (!isPlayerTag(player)) return json({error:'invalid_player'},400,headers);
+    try {return json(await locatePlayer(env,player),200,headers);} catch {return json({error:'unavailable'},503,headers);}
+  }
   if (path !== '/api/dashboard') return json({error:'not_found'},404,headers);
   if (request.method !== 'GET') return json({error:'method_not_allowed'},405,headers);
   const selected=findClan(url.searchParams.get('clan') || env.CLAN_TAG || DEFAULT_CLAN);
@@ -85,7 +100,7 @@ export async function route(request,env) {
     const payload={configured,clanTag:env.CLAN_TAG,clans:CLANS,monitoringMode:'automatic',collectionIntervalMinutes:5,timeline:timeline || [],current,health:health || {code:configured?'awaiting_first_sync':'missing_clash_token'},
       events:events.results,wars:wars.results.map(w=>JSON.parse(w.payload)),
       baseline:snapshot ? {clan:JSON.parse(snapshot.payload),capturedAt:snapshot.created_at} : null,
-      channels:{telegram:Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID),discord:Boolean(env.DISCORD_WEBHOOK_URL)},
+      channels:{discord:Boolean(env.DISCORD_WEBHOOK_URL)},
       delivery:delivery.results, extras, links:publicLinks(env)};
     // Um único documento público pode ser cacheado no painel; não há rotas públicas de escrita.
     return json(payload,200,headers);

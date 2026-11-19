@@ -1,6 +1,6 @@
 # TIGERS FAMILY · Família TIGERS OF WAR
 
-Monitor do clã **#R0UPVVVY**, com painel público para Vercel, coleta agendada no Cloudflare Workers, histórico no D1 e avisos independentes para Telegram e Discord.
+Monitor do clã **#R0UPVVVY**, com painel público para Vercel, coleta agendada no Cloudflare Workers, histórico no D1 e aviso no Discord.
 
 Painel: https://tigers-family-tow.vercel.app
 
@@ -38,7 +38,7 @@ Os endpoints `warlog` e `capitalraidseasons` são consultados no máximo uma vez
 
 O Instagram da família, https://www.instagram.com/tigers_of_war/, está disponível no cabeçalho, na central e na chamada de comunidade.
 
-Links públicos de avisos são variáveis do Worker: `DISCORD_PUBLIC_URL` e `TELEGRAM_PUBLIC_URL`. A API valida os domínios e nunca reutiliza a URL secreta do webhook como convite. O link do Telegram abre o bot; ele não cadastra automaticamente novos destinatários. Atualmente os avisos são enviados ao chat e ao canal configurados pelo administrador.
+O link público de aviso é a variável do Worker `DISCORD_PUBLIC_URL`. A API valida os domínios e nunca reutiliza a URL secreta do webhook como convite. Atualmente os avisos são enviados ao canal do Discord configurado pelo administrador.
 
 ## Preferências de leitura e imagem do clã
 
@@ -108,13 +108,12 @@ GitHub ──build──> Vercel (painel estático público)
                   Cloudflare Worker ──> D1
                     │ cron 5 minutos
                     ├─> RoyaleAPI proxy ──> API oficial Clash
-                    ├─> Telegram Bot API
                     └─> Discord webhook
 ```
 
 Usa as cotas gratuitas dos provedores, sem contratar plano pago. O cron principal executa 288 vezes por dia e o da família 1.440 vezes por dia; este último distribui as execuções entre os outros 15 clãs. O histórico usa uma captura do clã por hora (retenção de 30 dias), eventos por 90 dias e guerras por 180 dias. O painel mostra as últimas 20 guerras e 30 ocorrências. Cotas e termos dos serviços podem mudar. O plano gratuito do Worker tem orçamento de CPU reduzido; acompanhe métricas após conectar os dados reais.
 
-O proxy é um serviço de terceiros, sem garantia de disponibilidade: ele recebe a chave dedicada da API Clash em cada consulta. Não recebe tokens do Telegram ou Discord. Use uma chave exclusiva para este projeto. É possível migrar o acesso para API direta alterando CLASH_API_BASE e usando infraestrutura com IP autorizado.
+O proxy é um serviço de terceiros, sem garantia de disponibilidade: ele recebe a chave dedicada da API Clash em cada consulta. Não recebe o token do Discord. Use uma chave exclusiva para este projeto. É possível migrar o acesso para API direta alterando CLASH_API_BASE e usando infraestrutura com IP autorizado.
 
 ## 1. Conectar o Clash antes de publicar
 
@@ -187,16 +186,7 @@ Importe o repositório GitHub na Vercel:
 
 `PUBLIC_API_BASE` não contém segredo: é a origem do Worker, sem barra final e sem `/api`. Não configure CLASH_API_TOKEN nem tokens dos canais na Vercel: o painel é inteiramente estático. Depois de conhecer a URL definitiva Vercel, ajuste PUBLIC_ORIGIN no Worker e publique novamente. Sem a URL do Worker, o painel exibe instruções de conexão.
 
-## 5. Conectar Telegram e Discord
-
-### Telegram
-
-Crie um bot via **@BotFather** no Telegram. Inicie uma conversa com ele ou adicione-o ao grupo que receberá os avisos. Obtenha o identificador `chat_id` pelo método getUpdates da Bot API após uma mensagem de teste, sem publicar a URL que contém o token. Canais/grupos precisam permitir que o bot envie mensagens.
-
-```sh
-npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put TELEGRAM_CHAT_ID
-```
+## 5. Conectar o Discord
 
 ### Discord
 
@@ -206,15 +196,15 @@ No canal desejado, use **Editar canal → Integrações → Webhooks**. Crie um 
 npx wrangler secret put DISCORD_WEBHOOK_URL
 ```
 
-O monitor desativa menções automáticas no Discord. As mensagens do Telegram são texto simples. Nenhuma associação automática entre tags Clash e usuários Telegram/Discord é realizada.
+O monitor desativa menções automáticas no Discord. Nenhuma associação automática entre tags Clash e usuários do Discord é realizada.
 
 ### Selecionar avisos
 
 Variáveis públicas de configuração do Worker:
 
-- `ALERT_CHANNELS`: `telegram,discord`, ou apenas um canal.
+- `ALERT_CHANNELS`: `discord` (o único canal de avisos atual).
 - `ALERT_TYPES`: lista global separada por vírgula de `member_join,member_leave,war_start,war_end,war_reminder`.
-- `ALERT_TYPES_TELEGRAM` e `ALERT_TYPES_DISCORD`: filtros adicionais opcionais por canal. Para desativar um canal, remova-o de ALERT_CHANNELS.
+- `ALERT_TYPES_DISCORD`: filtro adicional opcional para o Discord. Para desativar o canal, remova-o de ALERT_CHANNELS.
 
 As configurações são aplicadas após nova publicação. O painel de alertas mostra se existem credenciais e a última entrega confirmada, sem exibir destinos ou tokens. Configurar credenciais não comprova entrega: confirme o primeiro envio real no canal escolhido.
 
@@ -297,7 +287,7 @@ O painel oferece um aplicativo web instalável, com ícones próprios e modo de 
 Esta etapa implementa avisos **por clã**, para quem acompanha ou organiza as cobranças. Não vincula contas do jogo a números de telefone e não encaminha mensagens automaticamente a jogadores. O lembrete abre o clã correto e a janela de texto para WhatsApp, com nova consulta dos dados. A pessoa revisa, escolhe a conversa e confirma o envio.
 
 - O agendamento existente cria lembretes nas janelas de vinte minutos após os marcos de seis horas e uma hora restantes, somente com dados recentes, guerra ativa e ataques confirmados. Uma inscrição recebe no máximo um trabalho por guerra e marco. Os outros clãs têm coleta de aproximadamente quinze minutos, portanto não há promessa de entrega no minuto exato do marco.
-- Os avisos são criptografados com Web Push (`aes128gcm`/VAPID) usando `@block65/webcrypto-web-push`, fixado em 2.0.0. O Worker mantém uma fila no D1, revalida a guerra antes do envio, processa até três trabalhos por minuto, limita a três tentativas e descarta avisos vencidos. Inscrições recusadas como expiradas pelo serviço são removidas. Os canais Telegram/Discord atuais continuam independentes.
+- Os avisos são criptografados com Web Push (`aes128gcm`/VAPID) usando `@block65/webcrypto-web-push`, fixado em 2.0.0. O Worker mantém uma fila no D1, revalida a guerra antes do envio, processa até três trabalhos por minuto, limita a três tentativas e descarta avisos vencidos. Inscrições recusadas como expiradas pelo serviço são removidas. O canal Discord atual continua independente.
 - A confirmação do servidor significa que o serviço de push aceitou o aviso, não que o aparelho o mostrou ou que alguém leu. Entrega e apresentação dependem da conexão, permissão, instalação e preferências do sistema operacional. O botão Enviar teste ajuda a confirmar no aparelho real.
 - Cada navegador guarda uma credencial aleatória própria para administrar apenas sua inscrição. Inscrições, endpoints e chaves do aparelho não são públicos. Endpoints são limitados a provedores reconhecidos, sem redirecionamento; o cadastro é limitado a vinte novas inscrições por conexão por dia e mil aparelhos no total. Não são guardados números de telefone. O controle por conexão guarda somente uma chave irreversível de curta duração, não o IP em texto.
 - O service worker não guarda respostas de dados nem listas de ataques. Sem internet, exibe uma página explicando que a consulta depende de conexão; assim não apresenta cobranças antigas como se fossem atuais.
