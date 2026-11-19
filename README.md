@@ -1,12 +1,14 @@
-# Sentinela · Clash of Clans
+# TIGERS FAMILY · Família TIGERS OF WAR
 
 Monitor do clã **#R0UPVVVY**, com painel público para Vercel, coleta agendada no Cloudflare Workers, histórico no D1 e avisos independentes para Telegram e Discord.
 
-Painel: https://sentinela-clash.vercel.app
+Painel: https://tigers-family-tow.vercel.app
+
+Código: https://github.com/JacksonLuiz99/tigers-family
 
 Monitor: https://clan-monitor.clan-monitor.workers.dev
 
-O código está conectado ao projeto Vercel `sentinela-clash`. A variável de produção `PUBLIC_API_BASE` aponta para o monitor. As alterações no Worker continuam exigindo `npm run deploy:worker`; mudanças no GitHub publicam o painel pela integração da Vercel.
+O código está conectado ao projeto Vercel `tigers-family`. A variável de produção `PUBLIC_API_BASE` aponta para o monitor. As alterações no Worker continuam exigindo `npm run deploy:worker`; mudanças no GitHub publicam o painel pela integração da Vercel.
 
 ## O que já está implementado
 
@@ -161,7 +163,7 @@ npx wrangler login
 npx wrangler d1 create clan-monitor
 ```
 
-Copie o `database_id` retornado para `wrangler.jsonc`. Não é um segredo. Defina `PUBLIC_ORIGIN` com a origem exata do painel Vercel (ex.: `https://sentinela-clash.vercel.app`), sem barra final.
+Copie o `database_id` retornado para `wrangler.jsonc`. Não é um segredo. Defina `PUBLIC_ORIGIN` com a origem exata do painel Vercel (ex.: `https://tigers-family-tow.vercel.app`), sem barra final.
 
 ```sh
 npm run db:remote
@@ -279,3 +281,11 @@ O texto contém clã/tag, modalidade, adversário, placar da captura, término, 
 Abrir a janela apenas consulta o dashboard existente. Copiar ou compartilhar revalida o prazo e a validade da captura; a mensagem perde a disponibilidade se os dados vencerem enquanto a janela estiver aberta. Troca de clã no painel ou fechamento cancela a consulta pendente. Se a área de transferência estiver bloqueada, o texto fica selecionado para cópia manual.
 
 Não há envio automático, destinatários configurados, associação de tags com telefones, marcação automática de contatos ou novas credenciais/custos de integração. O usuário escolhe a conversa ou grupo e confirma o envio no WhatsApp. Os testes de interface verificam o texto, o link e a cópia, sem abrir conversas ou enviar mensagens.
+
+## Identidade e domínio
+
+O projeto e o repositório se chamam **tigers-family**, com a marca da família **TIGERS OF WAR**. O endereço público é **https://tigers-family-tow.vercel.app**. O endereço anterior `https://sentinela-clash.vercel.app` redireciona para o novo; a origem anterior também é aceita explicitamente pelo Worker durante a transição. O ID do projeto Vercel, a integração GitHub, o Worker, o banco D1 e os canais de aviso permanecem os mesmos. Os nomes internos `clan-monitor` no Worker e no banco são preservados para não duplicar infraestrutura nem perder histórico.
+
+Nos celulares, o menu inferior fica fixo com **Família**, **Clã** e **Liderança**, ícones e indicação da área atual. Ele respeita a área segura do aparelho e o tamanho de fonte escolhido. A página reserva espaço para sua altura, com margem adicional, e os diálogos o ocultam enquanto estão abertos. O seletor de seção continua no topo. Em telas maiores, a navegação permanece no cabeçalho do painel.
+
+Preferências de tema, fonte e último clã usam o localStorage do navegador e são específicas de cada domínio. O novo endereço inicia com os padrões do painel; a mudança não transfere essas preferências entre domínios e não afeta os dados no servidor.

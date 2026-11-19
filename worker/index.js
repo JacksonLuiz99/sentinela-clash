@@ -26,7 +26,7 @@ export async function route(request,env) {
   }
   const origin=request.headers.get('Origin');
   const headers={Vary:'Origin'};
-  if (origin && origin === env.PUBLIC_ORIGIN) headers['Access-Control-Allow-Origin']=origin;
+  if (origin && [env.PUBLIC_ORIGIN,env.LEGACY_PUBLIC_ORIGIN].includes(origin)) headers['Access-Control-Allow-Origin']=origin;
   if (request.method === 'OPTIONS') return new Response(null,{status:204,headers:{...headers,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type'}});
   if (['/api/management','/api/player-evolution','/api/clan-management','/api/leadership','/api/manual-wars','/api/goals'].includes(path)) {
     try {

@@ -17,11 +17,16 @@ export function initNavigation() {
     $('section-nav').setAttribute('aria-label',`Seções de ${group.label}`);$('section-label').textContent=`Seção de ${group.label}${group.id==='family'||!selectedLabel?'':' · '+selectedLabel}`;
     if(scroll)document.querySelector('.command-bar').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   }
-  document.querySelectorAll('[data-nav-group]').forEach(b=>b.addEventListener('click',()=>show(remembered.get(b.dataset.navGroup))));
+  document.querySelectorAll('[data-nav-group]').forEach(b=>b.addEventListener('click',()=>{
+    const section=remembered.get(b.dataset.navGroup);show(section);
+    if(b.closest('#mobile-bottom-nav'))requestAnimationFrame(()=>$(section)?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));
+  }));
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.tab)));
   $('section-select').addEventListener('change',e=>show(e.target.value));
   document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.open,true);if(b.dataset.scroll)$(b.dataset.scroll)?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}));
   // Ancoragens internas podem abrir uma seção que foi movida para outra área.
   document.addEventListener('click',e=>{const link=e.target.closest('a[href^="#"]');if(!link)return;const target=document.getElementById(link.getAttribute('href').slice(1));const section=target?.closest('.tab-panel');if(section?.hidden)show(section.id);});
+  const bottomMenu=$('mobile-bottom-nav');
+  if(bottomMenu && typeof ResizeObserver!=='undefined'){const observer=new ResizeObserver(()=>{const height=bottomMenu.getBoundingClientRect().height;if(height>0)document.documentElement.style.setProperty('--mobile-menu-height',`${Math.ceil(height)}px`);else document.documentElement.style.removeProperty('--mobile-menu-height');});observer.observe(bottomMenu);}
   show('overview');return {show,setClan(label){selectedLabel=label;$('navigation-clan').textContent=`Clã selecionado: ${label}`;const group=NAVIGATION.find(g=>g.id===activeGroup);$('section-label').textContent=`Seção de ${group.label}${activeGroup==='family'?'':' · '+label}`;}};
 }

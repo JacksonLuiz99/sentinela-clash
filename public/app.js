@@ -29,7 +29,7 @@ function setClanIdentity(clan = findClan(selectedClan)) {
   $('clan-select').value = selectedClan;navigation.setClan(findClan(selectedClan)?.label || selectedClan);
   $('observed-clan-name').textContent = clan?.name || selectedClan;
   $('observed-clan-tag').textContent = selectedClan;
-  document.title = `${clan?.name || selectedClan} · Família TIGERS`;
+  document.title = `${clan?.name || selectedClan} · TIGERS FAMILY`;
   document.querySelectorAll('[data-clan-link]').forEach(a => a.href = `https://link.clashofclans.com/pt?action=OpenClanProfile&tag=${encodeURIComponent(selectedClan.slice(1))}`);
   $('clan-monitoring-note').textContent = selectedClan === DEFAULT_CLAN ? 'Monitoramento automático. Os avisos deste clã já estão configurados.' : 'Coleta automática a cada 15 min. Os canais de avisos deste clã serão configurados depois.';
 }

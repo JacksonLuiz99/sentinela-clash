@@ -157,3 +157,11 @@ test('Capital armazena resumo útil sem duplicar registros extensos de ataques',
   assert.equal(result.raids.items[0].capitalTotalLoot,123);assert.equal(result.raids.items[0].members[0].attacks,6);
   assert.ok(!('attackLog' in result.raids.items[0]));
 });
+
+test('mudança de domínio aceita somente as duas origens explícitas durante a transição',async()=>{
+  const config={PUBLIC_ORIGIN:'https://family.example',LEGACY_PUBLIC_ORIGIN:'https://old-family.example'};
+  for(const [origin,allowed] of [['https://family.example',true],['https://old-family.example',true],['https://family.example.attacker.test',false],['https://another.example',false]]){
+    const response=await route(new Request('https://worker.test/api/unknown',{method:'OPTIONS',headers:{Origin:origin}}),config);
+    assert.equal(response.status,204);assert.equal(response.headers.get('Access-Control-Allow-Origin'),allowed?origin:null);assert.equal(response.headers.get('Vary'),'Origin');
+  }
+});
