@@ -1,6 +1,16 @@
 // Datas históricas vêm dos registros das mudanças; não representam necessariamente o minuto exato do deploy.
 export const RELEASES = Object.freeze([
   {
+    "version": "2026.11.19.14",
+    "recordedAt": "2026-11-19T17:36:47.000Z",
+    "title": "Ajustes em Meu início",
+    "changes": [
+      "Se a tag estiver em formato inválido, o texto digitado continua no campo, para você só corrigir.",
+      "Na busca por todos os clãs, a mensagem ficou mais curta e não repete a informação do cartão."
+    ],
+    "section": "player"
+  },
+  {
     "version": "2026.11.19.13",
     "recordedAt": "2026-11-19T17:11:04.000Z",
     "title": "Avisos agora chegam só pelo Discord",

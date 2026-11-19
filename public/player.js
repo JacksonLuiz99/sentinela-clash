@@ -101,14 +101,14 @@ export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, da
     if (locate.tag !== tag) return '<button id="player-search" class="button" type="button">Procurar em todos os clãs</button>';
     if (locate.state === 'loading') return '<p class="coverage">Procurando nos clãs da família…</p>';
     if (locate.state === 'error') return `<p class="player-warning">${esc(locate.error)}</p><button id="player-search" class="outline-button" type="button">Tentar de novo</button>`;
-    if (!locate.matches.length) return '<p class="coverage">Não encontramos esta tag em nenhum clã da família nas últimas coletas. Confira a tag no seu perfil do jogo.</p>';
+    if (!locate.matches.length) return '<p class="coverage">Também não aparece em nenhum outro clã da família nas últimas coletas. Confira se a tag está correta no seu perfil do jogo.</p>';
     return `<ul class="player-locate-list">${locate.matches.map(m => `<li><span><strong>${esc(m.clanName)}</strong> · ${esc(ROLES[m.role] || m.role)}${m.capturedAt ? ` · coleta de ${esc(date(m.capturedAt))}` : ''}</span><button class="outline-button" type="button" data-switch-clan="${esc(m.clanTag)}">Ver neste clã</button></li>`).join('')}</ul><p class="coverage">Os dados vêm da última coleta de cada clã.</p>`;
   }
   const formArea = $('player-form-area');
   const status = $('player-status');
 
-  function formHtml(tag, error) {
-    return `<form id="player-form" class="panel player-form"><h3>QUAL É A SUA TAG?</h3><p class="coverage">No jogo, abra seu perfil. A tag aparece abaixo do seu nome e começa com #. Ela fica guardada só neste aparelho.</p><label>Sua tag<input id="player-tag-input" maxlength="20" autocomplete="off" spellcheck="false" placeholder="#2PP822" required></label><p class="player-error" role="alert"${error ? '' : ' hidden'}>${esc(error || '')}</p><div class="recruit-actions"><button class="button" type="submit">Salvar minha tag</button>${tag ? '<button type="button" class="outline-button" id="player-cancel">Cancelar</button>' : ''}</div></form>`;
+  function formHtml(tag, error, typed = '') {
+    return `<form id="player-form" class="panel player-form"><h3>QUAL É A SUA TAG?</h3><p class="coverage">No jogo, abra seu perfil. A tag aparece abaixo do seu nome e começa com #. Ela fica guardada só neste aparelho.</p><label>Sua tag<input id="player-tag-input" maxlength="20" autocomplete="off" spellcheck="false" placeholder="#2PP822" value="${esc(typed)}" required></label><p class="player-error" role="alert"${error ? '' : ' hidden'}>${esc(error || '')}</p><div class="recruit-actions"><button class="button" type="submit">Salvar minha tag</button>${tag ? '<button type="button" class="outline-button" id="player-cancel">Cancelar</button>' : ''}</div></form>`;
   }
 
   function warBlock(w) {
@@ -164,7 +164,7 @@ export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, da
     const input = $('player-tag-input');
     const tag = normalizePlayerTag(input.value);
     if (!tag) {
-      formArea.innerHTML = formHtml(readPlayerTag(), 'Tag inválida. Use somente 0, 2, 8, 9, P, Y, L, Q, G, R, J, C, U e V, como #2PP822. A letra O vale como zero.');
+      formArea.innerHTML = formHtml(readPlayerTag(), 'Tag inválida. Use somente 0, 2, 8, 9, P, Y, L, Q, G, R, J, C, U e V, como #2PP822. A letra O vale como zero.', input.value);
       return;
     }
     writePlayerTag(tag);
