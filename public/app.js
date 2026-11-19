@@ -1,3 +1,4 @@
+import { REPORTS, buildExport, createDownload } from './exports.js';
 import { CLANS, DEFAULT_CLAN, findClan, preferredClan } from './clans.js';
 import { performance, mergedHistory, outcome, parseGameTime, publicLinks, podiumHighlights } from './stats.js';
 const $ = id => document.getElementById(id);
@@ -17,6 +18,7 @@ let selectedClan = DEFAULT_CLAN;
 try { selectedClan = preferredClan(localStorage.getItem(CLAN_STORAGE)); } catch { /* Funciona mesmo sem armazenamento local. */ }
 let activeRequest = 0; let activeController = null;
 const viewCache = new Map();
+let exportSnapshot = null;
 function setClanIdentity(clan = findClan(selectedClan)) {
   $('clan-select').value = selectedClan;
   $('observed-clan-name').textContent = clan?.name || selectedClan;
@@ -26,6 +28,7 @@ function setClanIdentity(clan = findClan(selectedClan)) {
   $('clan-monitoring-note').textContent = selectedClan === DEFAULT_CLAN ? 'Monitoramento automático. Os avisos deste clã já estão configurados.' : 'Consulta no painel. Os avisos deste clã serão configurados depois; o histórico individual registra guerras consultadas.';
 }
 function clearClanData() {
+  $('export-dialog').close();exportSnapshot = null;$('open-export').disabled = true;$('download-message').textContent = '';
   data = null;
   for (const id of ['metric-wins','metric-members','metric-trophies','metric-league','metric-level','metric-streak']) $(id).textContent = '—';
   $('clan-meta').replaceChildren();$('clan-description').textContent = '';$('clan-requirements').replaceChildren();$('donation-total').textContent = '';
@@ -152,7 +155,7 @@ function renderCapital(clan) {
 }
 function render(payload) {
   data = payload;const current = data.current;const clan = current?.clan;const health = data.health || {};
-  $('setup').hidden = Boolean(clan);renderLinks(data.links);if(clan)setClanIdentity(clan);
+  $('setup').hidden = Boolean(clan);$('open-export').disabled = !clan;renderLinks(data.links);if(clan)setClanIdentity(clan);
   const stale = current && Date.now()-current.capturedAt > 15*60000;
   const warStale = current?.war && (!current.warCapturedAt || Date.now()-current.warCapturedAt > 15*60000);
   const ok = health.code === 'ok' && !stale;
@@ -181,6 +184,44 @@ function render(payload) {
     $(`${channel}-info`).textContent = enabled ? `${delivery?.last_sent?'Último envio confirmado: '+date(delivery.last_sent):'Canal configurado, aguardando o primeiro envio.'}${delivery?.retrying?' Há mensagens aguardando nova tentativa.':''}` : data.monitoringMode === 'on_demand' ? 'Os avisos deste clã serão configurados em uma próxima etapa.' : 'Este canal ainda não está conectado ao monitor.';
   }
 }
+function updateExportOptions() {
+  if(!exportSnapshot) return;
+  const format = $('export-format').value;const all = $('export-report').querySelector('option[value="all"]');
+  all.disabled = format === 'csv';
+  if(format === 'csv' && $('export-report').value === 'all') $('export-report').value = 'members';
+  const bundle = buildExport(exportSnapshot);const report = $('export-report').value;
+  $('export-description').textContent = report === 'all' ? (format === 'xlsx' ? 'Uma planilha com sete abas: resumo, membros, guerras, dois rankings, ataques e Capital.' : 'Um arquivo estruturado com os seis relatórios e informações da coleta.') : `${REPORTS.find(r=>r.id===report)?.title}: ${num(bundle.tables[report]?.rows.length || 0)} registros disponíveis. O arquivo inclui o nome e a tag do clã.`;
+  $('export-error').hidden = true;
+}
+$('open-export').addEventListener('click',()=>{
+  if(!data?.current?.clan || data.clanTag !== selectedClan) return;
+  exportSnapshot = structuredClone(data);
+  const bundle = buildExport(exportSnapshot);
+  $('export-context').textContent = `${bundle.meta.clan.name} · ${bundle.meta.clan.tag} · Coleta: ${date(exportSnapshot.current.capturedAt)} (Cuiabá)`;
+  $('export-format').value = 'xlsx';
+  const all = document.createElement('option');all.value = 'all';all.textContent = 'Todos os dados disponíveis';
+  $('export-report').replaceChildren(all,...REPORTS.map(report=>{const option=document.createElement('option');option.value=report.id;option.textContent=`${report.title} (${num(bundle.tables[report.id].rows.length)})`;return option;}));
+  const panel = document.querySelector('.tab-panel:not([hidden])')?.id;
+  $('export-report').value = ({members:'members',wars:'wars',capital:'capital',rankings:$('ranking-scope').value==='history'?'historicalRanking':'currentRanking'})[panel] || 'all';
+  updateExportOptions();$('export-dialog').showModal();
+});
+$('export-format').addEventListener('change',updateExportOptions);$('export-report').addEventListener('change',updateExportOptions);
+for(const id of ['close-export','cancel-export']) $(id).addEventListener('click',()=>$('export-dialog').close());
+$('export-dialog').addEventListener('close',()=>{exportSnapshot=null;});
+$('export-form').addEventListener('submit',event=>{
+  event.preventDefault();
+  if(!exportSnapshot || exportSnapshot.clanTag !== selectedClan) {$('export-dialog').close();return;}
+  $('confirm-export').disabled=true;
+  try {
+    const file = createDownload(exportSnapshot,$('export-format').value,$('export-report').value);
+    const blob = new Blob([file.content],{type:file.mime});const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');anchor.href=url;anchor.download=file.filename;document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    $('download-message').textContent=`Arquivo preparado para ${exportSnapshot.current.clan.name}: ${file.filename}.`;
+    $('export-dialog').close();
+  } catch(error) {
+    $('export-error').textContent=error.message || 'Não foi possível preparar o arquivo. Tente novamente.';$('export-error').hidden=false;
+  } finally {$('confirm-export').disabled=false;}
+});
 async function refresh() {
   if (busy) return;busy = true;$('refresh').disabled = true;
   const requestId = ++activeRequest;const tag = selectedClan;

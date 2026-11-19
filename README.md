@@ -75,6 +75,18 @@ A última escolha fica na chave `tigers-last-clan` do localStorage, independente
 
 Na validação inicial, TIGERS OF WAR e TOW-eSports retornaram acesso negado aos dados de guerra. Seus perfis continuam disponíveis, e o painel identifica a guerra como indisponível em vez de inferir que não há confronto.
 
+## Downloads do clã selecionado
+
+O botão **Baixar dados** abre a central de exportação. Ele usa somente os dados carregados do clã em observação, sem novas chamadas à API e sem custo adicional de serviço.
+
+- **Excel (.xlsx):** planilha OOXML real com sete abas (Resumo, Membros, Guerras, Ranking atual, Ranking histórico, Ataques e Capital), filtros, cabeçalho fixo e células numéricas. Também permite baixar um relatório específico junto da aba Resumo.
+- **CSV:** um relatório por arquivo, com UTF-8/BOM, delimitador ponto e vírgula e decimais com vírgula, adequado ao Excel/LibreOffice em português.
+- **JSON:** metadados do clã e da coleta, observações de cobertura e relatórios estruturados por coluna.
+
+O relatório de ataques contém a ofensiva do clã nos confrontos detalhados disponíveis. A Capital exporta a participação dos membros nos fins de semana retidos. Rankings históricos excluem guerras sem dados individuais; resumos da API e guerras observadas são unificados sem duplicação. Os arquivos não prometem histórico ilimitado nem recuperação de dados restringidos pela API. Horários exportados são UTC e o nome do arquivo inclui tag e data.
+
+A exportação congela a coleta quando o diálogo é aberto. Uma troca de clã fecha o diálogo, evitando baixar dados de uma seleção anterior. Segredos e configurações dos canais não são incluídos. Nomes são texto em XLSX; o CSV neutraliza prefixos de fórmulas de planilhas. A interface foi conferida em telas móveis e com fonte ampliada. A planilha completa foi aberta e salva com sucesso pelo LibreOffice.
+
 ## Arquitetura e custo
 
 ```text
