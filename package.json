@@ -1,18 +1,25 @@
 {
   "name": "tigers-family",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "dev": "wrangler dev --port 8787",
     "build": "node scripts/build.mjs",
     "test": "node --test",
-    "check": "node --check worker/index.js && node --check worker/monitor.js && node --check worker/events.js && node --check public/app.js && node --check public/stats.js && node --check public/appearance.js && node --check public/clans.js && node --check worker/family.js && node --check public/exports.js && node --check public/intelligence.js && node --check public/management.js && node --check worker/management.js && node --check scripts/setup-leadership.mjs && node --check public/navigation.js && node --check public/attention.js && node --check public/whatsapp.js",
+    "check": "node --check worker/index.js && node --check worker/monitor.js && node --check worker/events.js && node --check public/app.js && node --check public/stats.js && node --check public/appearance.js && node --check public/clans.js && node --check worker/family.js && node --check public/exports.js && node --check public/intelligence.js && node --check public/management.js && node --check worker/management.js && node --check scripts/setup-leadership.mjs && node --check public/navigation.js && node --check public/attention.js && node --check public/whatsapp.js && node --check worker/push.js && node --check public/sw.js && node --check public/offline.js && node --check public/pwa.js && node --check scripts/setup-push.mjs && node --check public/releases.js && node --check public/versions.js",
     "connection:test": "node --env-file-if-exists=.dev.vars scripts/check-connection.mjs",
     "db:local": "wrangler d1 migrations apply clan-monitor --local",
     "db:remote": "wrangler d1 migrations apply clan-monitor --remote",
     "deploy:worker": "wrangler deploy"
   },
-  "devDependencies": { "wrangler": "4.164.0" }
+  "devDependencies": {
+    "wrangler": "4.164.0"
+  },
+  "dependencies": {
+    "@block65/webcrypto-web-push": "2.0.0"
+  }
 }

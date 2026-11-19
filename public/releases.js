@@ -1,0 +1,201 @@
+// Datas históricas vêm dos registros das mudanças; não representam necessariamente o minuto exato do deploy.
+export const RELEASES = Object.freeze([
+  {
+    "version": "2026.11.19.8",
+    "recordedAt": "2026-11-19T15:55:04.267Z",
+    "title": "O quartel virou aplicativo, com lembretes no celular",
+    "changes": [
+      "Instale o TIGERS FAMILY na tela inicial do aparelho.",
+      "Escolha os clãs e ative lembretes quando faltarem cerca de 6 horas e 1 hora para a guerra terminar, se ainda houver ataques disponíveis.",
+      "Ao tocar no aviso, revise a lista e prepare o texto para encaminhar. O envio pelo WhatsApp continua sendo confirmado por você.",
+      "Esta aba reúne as melhorias do painel em linguagem simples, com data e horário de cada registro."
+    ],
+    "section": "alerts"
+  },
+  {
+    "version": "2026.11.19.7",
+    "recordedAt": "2026-11-19T11:33:03-04:00",
+    "title": "Um endereço com a cara da família",
+    "changes": [
+      "O painel passou a usar tigers-family-tow.vercel.app, mantendo a identidade TIGERS OF WAR.",
+      "O endereço antigo leva ao novo automaticamente.",
+      "No celular, Família, Clã e Liderança ficam acessíveis pelo menu fixo na parte inferior da tela."
+    ],
+    "section": "family"
+  },
+  {
+    "version": "2026.11.19.6",
+    "recordedAt": "2026-11-19T11:13:53-04:00",
+    "title": "Cobrança pronta para o WhatsApp",
+    "changes": [
+      "Gere uma mensagem com os jogadores que ainda têm ataques, o adversário e o prazo da guerra.",
+      "Copie o texto ou abra o WhatsApp e escolha onde enviar.",
+      "A lista usa uma coleta recente e não cobra jogadores de guerras privadas ou já encerradas."
+    ],
+    "section": "overview"
+  },
+  {
+    "version": "2026.11.19.5",
+    "recordedAt": "2026-11-19T10:56:32-04:00",
+    "title": "O que precisa da atenção da liderança",
+    "changes": [
+      "Um resumo reúne ataques pendentes, metas perto do prazo e coletas que precisam ser verificadas.",
+      "Os atalhos abrem o clã e a seção certos para agir.",
+      "A navegação foi organizada em Família, Clã e Liderança, com seletor de seção no celular."
+    ],
+    "section": "family"
+  },
+  {
+    "version": "2026.11.19.4",
+    "recordedAt": "2026-11-19T10:33:41-04:00",
+    "title": "Mais organização para a família inteira",
+    "changes": [
+      "Consulte vagas e requisitos para encontrar um clã.",
+      "Compare dois clãs e veja a distribuição dos jogadores por Centro de Vila.",
+      "Acompanhe entradas, saídas e possíveis transferências entre os clãs.",
+      "A liderança ganhou uma área protegida para definir metas e registrar resultados de guerras manualmente.",
+      "O perfil do guerreiro passou a mostrar sua evolução nas coletas diárias."
+    ],
+    "section": "operations"
+  },
+  {
+    "version": "2026.11.19.3",
+    "recordedAt": "2026-11-19T10:06:27-04:00",
+    "title": "Os 16 clãs passaram a ser acompanhados automaticamente",
+    "changes": [
+      "A visão da família reúne membros, vagas, ligas, guerras e ataques disponíveis.",
+      "O TOW 4 é consultado a cada 5 minutos; os demais completam um ciclo de cerca de 15 minutos.",
+      "Compare desempenho por período e Centro de Vila, consulte rodadas acompanhadas da Liga e a participação na Capital."
+    ],
+    "section": "intelligence"
+  },
+  {
+    "version": "2026.11.19.2",
+    "recordedAt": "2026-11-19T09:24:29-04:00",
+    "title": "Os dados também na sua planilha",
+    "changes": [
+      "O botão Baixar dados passou a oferecer Excel, CSV e JSON.",
+      "Leve membros, guerras, rankings, ataques e participação na Capital para analisar fora do painel.",
+      "Os arquivos informam o clã, a data da coleta e as limitações do histórico disponível."
+    ],
+    "section": "members"
+  },
+  {
+    "version": "2026.11.19.1",
+    "recordedAt": "2026-11-19T08:20:01-04:00",
+    "title": "A família completa no seletor",
+    "changes": [
+      "Os 16 clãs informados pela família foram organizados com seus nomes curtos e tags.",
+      "Ficou mais fácil localizar o clã e consultar seu nome oficial no jogo."
+    ],
+    "section": "family"
+  },
+  {
+    "version": "2026.11.18.10",
+    "recordedAt": "2026-11-18T17:57:26-04:00",
+    "title": "Um pódio para quem está na linha de frente",
+    "changes": [
+      "Os destaques da guerra ganharam pódio de ouro, prata e bronze.",
+      "Estrelas dos ataques, triplos e destruição média ajudam a entender cada destaque.",
+      "Empates são sinalizados e nenhum guerreiro aparece sem ter realizado um ataque."
+    ],
+    "section": "rankings"
+  },
+  {
+    "version": "2026.11.18.9",
+    "recordedAt": "2026-11-18T17:50:42-04:00",
+    "title": "O Instagram da família ficou mais perto",
+    "changes": [
+      "Links para o Instagram oficial foram adicionados ao cabeçalho e às áreas de comunidade."
+    ],
+    "section": "alerts"
+  },
+  {
+    "version": "2026.11.18.8",
+    "recordedAt": "2026-11-18T17:43:46-04:00",
+    "title": "Mais clãs para acompanhar",
+    "changes": [
+      "TOW Evo e TOW Academy entraram no seletor da família."
+    ],
+    "section": "family"
+  },
+  {
+    "version": "2026.11.18.7",
+    "recordedAt": "2026-11-18T17:37:16-04:00",
+    "title": "A família continuou crescendo no painel",
+    "changes": [
+      "TOW Formation e TIGERS OF WAR 3 passaram a aparecer entre os clãs disponíveis."
+    ],
+    "section": "family"
+  },
+  {
+    "version": "2026.11.18.6",
+    "recordedAt": "2026-11-18T17:32:54-04:00",
+    "title": "Cada pessoa escolhe o clã que quer observar",
+    "changes": [
+      "O seletor permitiu alternar entre os clãs sem misturar membros ou guerras.",
+      "O navegador passou a lembrar o último clã escolhido."
+    ],
+    "section": "family"
+  },
+  {
+    "version": "2026.11.18.5",
+    "recordedAt": "2026-11-18T10:54:08-04:00",
+    "title": "Uma leitura mais confortável e a nossa identidade",
+    "changes": [
+      "Entraram as opções de aumentar ou diminuir a fonte e escolher tema escuro, claro ou confortável.",
+      "As preferências ficam salvas neste navegador.",
+      "A arte da família passou a fazer parte da apresentação do painel."
+    ],
+    "section": "overview"
+  },
+  {
+    "version": "2026.11.18.4",
+    "recordedAt": "2026-11-18T10:15:27-04:00",
+    "title": "Mais histórico de guerras e da Capital",
+    "changes": [
+      "Resultados anteriores disponíveis na consulta do jogo começaram a enriquecer o histórico.",
+      "Os últimos fins de semana da Capital passaram a mostrar saque e participação."
+    ],
+    "section": "capital"
+  },
+  {
+    "version": "2026.11.18.3",
+    "recordedAt": "2026-11-18T10:14:08-04:00",
+    "title": "O painel ganhou cara de TIGERS OF WAR",
+    "changes": [
+      "A guerra, o histórico e a elite receberam mais destaque.",
+      "Entraram informações da Capital e links para a comunidade.",
+      "O rodapé ganhou a assinatura de Jackson Luiz, com acesso ao portfólio."
+    ],
+    "section": "overview"
+  },
+  {
+    "version": "2026.11.18.2",
+    "recordedAt": "2026-11-18T08:38:34-04:00",
+    "title": "O quartel ficou disponível na internet",
+    "changes": [
+      "O painel ganhou um endereço público para acompanhar o clã pelo navegador."
+    ],
+    "section": "overview"
+  },
+  {
+    "version": "2026.11.18.1",
+    "recordedAt": "2026-11-18T08:31:35-04:00",
+    "title": "Os registros passaram a ser guardados",
+    "changes": [
+      "A coleta ganhou armazenamento para conservar eventos, resultados e referências do clã."
+    ],
+    "section": "wars"
+  },
+  {
+    "version": "2026.11.17.1",
+    "recordedAt": "2026-11-17T13:51:57-04:00",
+    "title": "Nasceu o monitor do TOW 4",
+    "changes": [
+      "A primeira versão reuniu membros, guerra e ataques pendentes do TIGERS OF WAR 4.",
+      "Começou o acompanhamento automático e a estrutura de avisos por Telegram e Discord."
+    ],
+    "section": "overview"
+  }
+]);

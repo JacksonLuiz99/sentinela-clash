@@ -1,3 +1,4 @@
+import { pushRoute, PushInputError, enqueuePush, deliverPush, collectPrimaryPush } from './push.js';
 import { managementOverview, playerEvolution, clanManagement, saveManualWar, saveGoals, ValidationError } from './management.js';
 import { readState, synchronize } from './monitor.js';
 import { publicLinks } from '../public/stats.js';
@@ -28,6 +29,10 @@ export async function route(request,env) {
   const headers={Vary:'Origin'};
   if (origin && [env.PUBLIC_ORIGIN,env.LEGACY_PUBLIC_ORIGIN].includes(origin)) headers['Access-Control-Allow-Origin']=origin;
   if (request.method === 'OPTIONS') return new Response(null,{status:204,headers:{...headers,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type'}});
+  if(path.startsWith('/api/push/')){
+    try{const result=await pushRoute(request,env,url);return json(result,result.status || 200,headers);}
+    catch(error){return json({error:error instanceof PushInputError?error.message:'Não foi possível atualizar as notificações. Tente novamente.'},error instanceof PushInputError?400:503,headers);}
+  }
   if (['/api/management','/api/player-evolution','/api/clan-management','/api/leadership','/api/manual-wars','/api/goals'].includes(path)) {
     try {
       if(path==='/api/management' && request.method==='GET')return json(await managementOverview(env),200,headers);
@@ -93,6 +98,6 @@ export default {
   fetch: route,
   scheduled(controller,env,ctx) {
     const now=controller.scheduledTime || Date.now();
-    ctx.waitUntil(controller.cron === '* * * * *' ? synchronizeFamily(env,now) : synchronize(env,now).then(async result=>{await recordPrimarySummary(env,now);return result;}));
+    ctx.waitUntil(controller.cron === '* * * * *' ? synchronizeFamily(env,now).then(async payload=>{try{await enqueuePush(env,payload,now);await deliverPush(env,now);}catch{/* A coleta e os canais atuais permanecem independentes do push. */}return payload;}) : synchronize(env,now).then(async result=>{await recordPrimarySummary(env,now);try{await collectPrimaryPush(env,now);}catch{/* O push não interrompe a coleta principal. */}return result;}));
   }
 };

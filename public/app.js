@@ -1,3 +1,5 @@
+import {initVersions} from './versions.js';
+import { initPwa, notificationLink } from './pwa.js';
 import { initWhatsApp } from './whatsapp.js';
 import { initNavigation } from './navigation.js';
 import { initAttention } from './attention.js';
@@ -21,6 +23,8 @@ let data = null; let busy = false;
 const CLAN_STORAGE = 'tigers-last-clan';
 let selectedClan = DEFAULT_CLAN;
 try { selectedClan = preferredClan(localStorage.getItem(CLAN_STORAGE)); } catch { /* Funciona mesmo sem armazenamento local. */ }
+const incoming=notificationLink(location.search);if(incoming.tag)selectedClan=incoming.tag;
+let reminderOpened=false;
 let activeRequest = 0; let activeController = null;
 const viewCache = new Map();
 const navigation=initNavigation();
@@ -47,6 +51,7 @@ function clearClanData() {
 }
 function switchClan(tag, persist = true) {
   const selected = findClan(tag);if(!selected) return;
+  if(incoming.reminder && selected.tag!==incoming.tag)reminderOpened=true;
   activeController?.abort();activeRequest++;busy = false;selectedClan = selected.tag;
   if(persist) {try {localStorage.setItem(CLAN_STORAGE, selectedClan);} catch { /* A troca continua funcionando. */ }}
   clearClanData();setClanIdentity();
@@ -241,6 +246,7 @@ async function refresh() {
     if(requestId!==activeRequest || tag!==selectedClan) return;
     if(payload.clanTag!==tag || (payload.current?.clan && payload.current.clan.tag!==tag)) throw new Error('wrong_clan');
     viewCache.set(tag,payload);render(payload);
+    if(incoming.reminder && !reminderOpened && incoming.tag===tag){reminderOpened=true;whatsapp.open(tag);const clean=new URL(location.href);clean.searchParams.delete('reminder');history.replaceState(null,'',clean.pathname+clean.search);}
     document.querySelectorAll('#pending details').forEach(d => {if(openMembers.includes(d.querySelector('summary')?.textContent)) d.open = true;});
   } catch {
     if(requestId!==activeRequest || tag!==selectedClan) return;
@@ -252,5 +258,7 @@ whatsapp = initWhatsApp({getSelectedClan:()=>selectedClan,apiBase:()=>window.CLA
 initAttention({escape:esc,date,openClanSection,showFamily:()=>tab('family',true)});
 management = initManagement({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 intelligence = initIntelligence({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
-$('refresh').addEventListener('click',()=>{refresh();intelligence?.refresh();});switchClan(selectedClan,false);
+initVersions({escape:esc,openSection:section=>tab(section,true)});
+initPwa({getSelectedClan:()=>selectedClan,apiBase:()=>window.CLAN_CONFIG?.apiBase || '',showSettings:()=>{tab('alerts',true);$('push-panel').scrollIntoView({block:'start'});}});
+$('refresh').addEventListener('click',()=>{refresh();intelligence?.refresh();});switchClan(selectedClan,Boolean(incoming.tag));if(incoming.view)tab(incoming.view);
 setInterval(() => {if(!document.hidden) refresh();},60000);setInterval(() => {if(!document.hidden) updateClock();},1000);

@@ -289,3 +289,23 @@ O projeto e o repositório se chamam **tigers-family**, com a marca da família 
 Nos celulares, o menu inferior fica fixo com **Família**, **Clã** e **Liderança**, ícones e indicação da área atual. Ele respeita a área segura do aparelho e o tamanho de fonte escolhido. A página reserva espaço para sua altura, com margem adicional, e os diálogos o ocultam enquanto estão abertos. O seletor de seção continua no topo. Em telas maiores, a navegação permanece no cabeçalho do painel.
 
 Preferências de tema, fonte e último clã usam o localStorage do navegador e são específicas de cada domínio. O novo endereço inicia com os padrões do painel; a mudança não transfere essas preferências entre domínios e não afeta os dados no servidor.
+
+## Aplicativo instalável e lembretes no aparelho
+
+O painel oferece um aplicativo web instalável, com ícones próprios e modo de janela independente. Acesse **Instalar app e ativar alertas**, ou **Liderança → Canais e avisos**, escolha os clãs e autorize notificações neste aparelho. No Android e navegadores compatíveis, use o botão Instalar ou o menu do navegador. No iPhone/iPad, use Compartilhar → Adicionar à Tela de Início no Safari e abra pelo ícone antes de ativar os alertas (Web Push em apps da Tela de Início, iOS/iPadOS 16.4+). A instalação e a permissão dependem de uma ação da pessoa no aparelho.
+
+Esta etapa implementa avisos **por clã**, para quem acompanha ou organiza as cobranças. Não vincula contas do jogo a números de telefone e não encaminha mensagens automaticamente a jogadores. O lembrete abre o clã correto e a janela de texto para WhatsApp, com nova consulta dos dados. A pessoa revisa, escolhe a conversa e confirma o envio.
+
+- O agendamento existente cria lembretes nas janelas de vinte minutos após os marcos de seis horas e uma hora restantes, somente com dados recentes, guerra ativa e ataques confirmados. Uma inscrição recebe no máximo um trabalho por guerra e marco. Os outros clãs têm coleta de aproximadamente quinze minutos, portanto não há promessa de entrega no minuto exato do marco.
+- Os avisos são criptografados com Web Push (`aes128gcm`/VAPID) usando `@block65/webcrypto-web-push`, fixado em 2.0.0. O Worker mantém uma fila no D1, revalida a guerra antes do envio, processa até três trabalhos por minuto, limita a três tentativas e descarta avisos vencidos. Inscrições recusadas como expiradas pelo serviço são removidas. Os canais Telegram/Discord atuais continuam independentes.
+- A confirmação do servidor significa que o serviço de push aceitou o aviso, não que o aparelho o mostrou ou que alguém leu. Entrega e apresentação dependem da conexão, permissão, instalação e preferências do sistema operacional. O botão Enviar teste ajuda a confirmar no aparelho real.
+- Cada navegador guarda uma credencial aleatória própria para administrar apenas sua inscrição. Inscrições, endpoints e chaves do aparelho não são públicos. Endpoints são limitados a provedores reconhecidos, sem redirecionamento; o cadastro é limitado a vinte novas inscrições por conexão por dia e mil aparelhos no total. Não são guardados números de telefone. O controle por conexão guarda somente uma chave irreversível de curta duração, não o IP em texto.
+- O service worker não guarda respostas de dados nem listas de ataques. Sem internet, exibe uma página explicando que a consulta depende de conexão; assim não apresenta cobranças antigas como se fossem atuais.
+
+Para configurar, aplique `0003_push.sql` e execute `node scripts/setup-push.mjs`. O script gera ou reutiliza o par `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` em `.dev.vars` e envia por stdin aos segredos do Worker, sem imprimir os valores. Nunca substitua essas chaves sem planejar a reativação das inscrições existentes. A chave pública é retornada em `/api/push/config`; a privada nunca sai do servidor.
+
+Rotas da inscrição: `/api/push/config`, `/api/push/subscribe`, `/api/push/status`, `/api/push/unsubscribe` e `/api/push/test`. As operações sobre um aparelho exigem sua credencial; ninguém pode enviar um texto arbitrário a outra inscrição. Não há nova assinatura paga, serviço de disparo de WhatsApp ou infraestrutura separada. As cotas gratuitas existentes continuam aplicáveis.
+
+## Novidades e versões
+
+A aba **Família → Novidades e versões** apresenta as melhorias em linguagem simples, com busca, filtro por data, horário de Cuiabá e atalho para a área correspondente. O catálogo está em `public/releases.js`; as entradas históricas foram reconstruídas com as datas dos registros Git, sem afirmar que esses horários são o minuto exato da publicação. A numeração pública `AAAA.MM.DD.N` identifica a ordem das atualizações daquele dia. `AGENTS.md` orienta a acrescentar uma entrada em cada próxima funcionalidade ou mudança visível.

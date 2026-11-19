@@ -1,5 +1,5 @@
 export const NAVIGATION = Object.freeze([
-  {id:'family',label:'Família',sections:[{id:'family',label:'Visão dos 16 clãs'},{id:'operations',label:'Recrutamento e organização'}]},
+  {id:'family',label:'Família',sections:[{id:'family',label:'Visão dos 16 clãs'},{id:'operations',label:'Recrutamento e organização'},{id:'versions',label:'Novidades e versões'}]},
   {id:'clan',label:'Clã',sections:[{id:'overview',label:'Campo de batalha'},{id:'wars',label:'Histórico'},{id:'rankings',label:'Elite de guerra'},{id:'members',label:'Nossa tropa'},{id:'capital',label:'Capital'},{id:'intelligence',label:'Inteligência'}]},
   {id:'leadership',label:'Liderança',sections:[{id:'leadership',label:'Metas e guerras manuais'},{id:'alerts',label:'Canais e avisos'}]}
 ]);
