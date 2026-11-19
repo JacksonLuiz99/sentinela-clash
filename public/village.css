@@ -1,0 +1,64 @@
+/* Etapa 2: acabamento visual dos componentes. Só cores, bordas, sombras e relevo; nada de layout ou comportamento. */
+:root{
+  --village-stone:linear-gradient(180deg,#1d1e20 0%,#141516 55%,#101112 100%);
+  --village-gold:linear-gradient(180deg,#ffb35c 0%,#ff8a35 58%,#e0701f 100%);
+  --village-edge:#5a3b1f;
+  --village-shadow:0 4px 0 #6a3412,0 10px 18px #0007;
+}
+.panel,.clan-strip>div,.history-metrics article,.attention-metrics>button,.warrior-card,.channel-card,.join-banner{
+  border-radius:12px;
+}
+.panel{background:var(--village-stone),var(--surface);border-color:#3a2d20;box-shadow:inset 0 1px 0 #ffffff0d,0 8px 22px #0005}
+.panel,.attention,.battle{border-top-width:3px}
+.battle{border-top-color:var(--orange)}
+.attention-metrics>button,.history-metrics article{border-radius:10px;border-color:#3a2d20;background:var(--village-stone),var(--surface2)}
+.attention-metrics>button:hover{border-color:var(--gold);box-shadow:0 0 0 2px #f3c16d33}
+
+/* Botões de ação: relevo de pedra dourada, com resposta ao toque. */
+.button{
+  border-radius:10px;
+  background:var(--village-gold);
+  color:#1a0f07;
+  border:1px solid #7a3d12;
+  box-shadow:var(--village-shadow);
+  text-shadow:0 1px 0 #ffd9a866;
+  transition:transform .12s,box-shadow .12s,filter .12s;
+}
+.button:hover{filter:brightness(1.06)}
+.button:active{transform:translateY(3px);box-shadow:0 1px 0 #6a3412,0 4px 8px #0008}
+.outline-button{
+  border-radius:10px;
+  border:1px solid #6b4a2a;
+  background:linear-gradient(180deg,#22190f,#15110c);
+  color:var(--text);
+  box-shadow:inset 0 -3px 0 #0a0705;
+  transition:transform .12s,border-color .12s,box-shadow .12s;
+}
+.outline-button:hover{border-color:var(--gold);color:var(--gold)}
+.outline-button:active{transform:translateY(2px);box-shadow:inset 0 -1px 0 #0a0705}
+.button:focus-visible,.outline-button:focus-visible,.nav-group:focus-visible,.nav:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* Grupos de navegação (Família, Clã, Liderança) como botões de pedra. */
+.nav-group{border-radius:10px;border-color:#4a3520;background:var(--village-stone);box-shadow:inset 0 -3px 0 #0a0705}
+.nav-group.active{background:var(--village-gold);border-color:#7a3d12;color:#1a0f07;box-shadow:var(--village-shadow)}
+
+/* Abas da seção: pílula com o item atual destacado. */
+.command-bar .section-navigation .nav{border-radius:999px;padding:8px 14px;border-bottom:0;margin-bottom:2px}
+.command-bar .section-navigation .nav.active{background:#ff8a3520;color:var(--gold);box-shadow:inset 0 0 0 1px #ff8a3566}
+
+/* Etiquetas e pílulas. */
+.tag{border-radius:999px;padding:5px 12px}
+
+/* Menu inferior do celular: item ativo com a mesma linguagem de pedra. */
+.mobile-bottom-nav{border-top:2px solid #4a3520;background:var(--village-stone)}
+.mobile-bottom-nav button{border-radius:12px}
+.mobile-bottom-nav button.active{background:#ff8a3522;border-color:#ff8a3577;color:var(--gold)}
+.mobile-bottom-nav button.active svg{filter:drop-shadow(0 0 4px #ff8a3599)}
+
+/* Campos de formulário com moldura de pedra. */
+input,select{border-radius:8px;border-color:#4a3520;background:#0b0a09}
+input:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold)}
+
+/* Cartão do jogador: destaque dourado no número de ataques. */
+.player-card{border-top-color:var(--gold)}
+.player-big strong{text-shadow:0 0 14px #ff8a3555}

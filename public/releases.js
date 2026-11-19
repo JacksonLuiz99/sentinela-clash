@@ -1,6 +1,41 @@
 // Datas históricas vêm dos registros das mudanças; não representam necessariamente o minuto exato do deploy.
 export const RELEASES = Object.freeze([
   {
+    "version": "2026.11.19.11",
+    "recordedAt": "2026-11-19T16:39:38.000Z",
+    "title": "Suas conquistas aparecem no seu início",
+    "changes": [
+      "Em Meu início, veja suas conquistas: ataques completos, triplos na guerra atual, sua posição nas doações e as guerras acompanhadas pelo monitor.",
+      "As conquistas usam somente o que o monitor registrou. Guerras sem dados não geram conquistas inventadas.",
+      "O Ranking de guerra continua no mesmo lugar, com todos os dados."
+    ],
+    "section": "player"
+  },
+  {
+    "version": "2026.11.19.10",
+    "recordedAt": "2026-11-19T16:37:48.000Z",
+    "title": "Painel com cara de quartel",
+    "changes": [
+      "Botões com relevo dourado e painéis de pedra, para destacar melhor as ações e as informações principais.",
+      "Abas da seção no formato de pílulas, com o item atual em destaque.",
+      "Menu inferior do celular com o mesmo visual, para facilitar a navegação entre Início, Família, Clã e Liderança.",
+      "Nenhuma informação foi removida: tudo o que existia continua no mesmo lugar."
+    ],
+    "section": "clan"
+  },
+  {
+    "version": "2026.11.19.9",
+    "recordedAt": "2026-11-19T16:32:04.000Z",
+    "title": "Meu início: seus ataques em um só lugar",
+    "changes": [
+      "Nova aba Meu início, no topo do painel e no botão Início do menu inferior do celular.",
+      "Informe sua tag do jogo uma vez neste aparelho e veja quantos ataques ainda faltam, quem você é na guerra e quanto tempo resta.",
+      "Se os dados da guerra estiverem antigos, o painel não cobra ataques e avisa que a informação ainda não foi confirmada.",
+      "Você pode trocar ou remover sua tag a qualquer momento. Ela fica guardada só neste aparelho."
+    ],
+    "section": "player"
+  },
+  {
     "version": "2026.11.19.8",
     "recordedAt": "2026-11-19T15:55:04.267Z",
     "title": "O quartel virou aplicativo, com lembretes no celular",

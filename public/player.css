@@ -1,0 +1,34 @@
+.player-status{margin-top:8px}
+.player-card{display:grid;gap:14px;border-top:3px solid var(--orange)}
+.player-card h3{font-family:var(--display);font-size:1.75rem;letter-spacing:.6px;margin:0;overflow-wrap:anywhere}
+.player-card .eyebrow{margin:0}
+.player-card .coverage{margin:0}
+.player-card a{color:var(--orange)}
+.player-missions{display:grid;gap:8px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.player-big{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.player-big strong{font-family:var(--display);font-size:3.25rem;line-height:1;color:var(--orange);font-weight:400}
+.player-big span{font-size:1rem;font-weight:700}
+.player-done{margin:0;color:var(--green);font-weight:700}
+.player-warning{margin:0;color:var(--gold);line-height:1.6}
+.player-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.player-actions .outline-button,.player-actions .button{min-height:44px}
+.player-missions+.button,.player-card>.button{justify-self:start;min-height:44px}
+.player-form{display:grid;gap:14px;margin-bottom:16px}
+.player-form h3{font-family:var(--display);font-size:1.5rem;margin:0}
+.player-form label{font-size:.9rem;color:var(--muted);display:grid;gap:8px}
+.player-form input{font-size:1.1rem;letter-spacing:.5px}
+.player-form .recruit-actions{display:flex;flex-wrap:wrap;gap:10px}
+.player-error{margin:0;color:var(--red);font-weight:700;line-height:1.5}
+.player-achievements{display:grid;gap:10px;padding-top:4px}
+.player-achievements h4{font-family:var(--display);font-size:1rem;letter-spacing:1.2px;color:var(--gold);margin:0}
+.player-achievements ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.player-achievements li{display:grid;gap:3px;padding:12px 14px;border:1px solid #4a3520;border-radius:10px;background:linear-gradient(180deg,#22190f,#15110c)}
+.player-achievements li strong{color:var(--text);font-size:.95rem}
+.player-achievements li span{color:var(--muted);font-size:.85rem;line-height:1.5}
+.player-achievements p{margin:0}
+@media(max-width:760px){
+  .player-card{padding:18px}
+  .player-card h3{font-size:1.5rem}
+  .player-big strong{font-size:2.75rem}
+  .player-actions .outline-button,.player-actions .button{width:100%}
+}

@@ -1,16 +1,18 @@
 export const NAVIGATION = Object.freeze([
   {id:'family',label:'Família',sections:[{id:'family',label:'Visão dos 16 clãs'},{id:'operations',label:'Recrutamento e organização'},{id:'versions',label:'Novidades e versões'}]},
-  {id:'clan',label:'Clã',sections:[{id:'overview',label:'Campo de batalha'},{id:'wars',label:'Histórico'},{id:'rankings',label:'Elite de guerra'},{id:'members',label:'Nossa tropa'},{id:'capital',label:'Capital'},{id:'intelligence',label:'Inteligência'}]},
+  {id:'clan',label:'Clã',defaultSection:'overview',sections:[{id:'player',label:'Meu início'},{id:'overview',label:'Campo de batalha'},{id:'wars',label:'Histórico'},{id:'rankings',label:'Elite de guerra'},{id:'members',label:'Nossa tropa'},{id:'capital',label:'Capital'},{id:'intelligence',label:'Inteligência'}]},
   {id:'leadership',label:'Liderança',sections:[{id:'leadership',label:'Metas e guerras manuais'},{id:'alerts',label:'Canais e avisos'}]}
 ]);
 export const navigationGroup=section=>NAVIGATION.find(g=>g.sections.some(s=>s.id===section)) || null;
 export function initNavigation() {
-  const $=id=>document.getElementById(id);let selectedLabel='';let activeGroup='clan';const remembered=new Map(NAVIGATION.map(g=>[g.id,g.sections[0].id]));
+  const $=id=>document.getElementById(id);let selectedLabel='';let activeGroup='clan';const remembered=new Map(NAVIGATION.map(g=>[g.id,g.defaultSection||g.sections[0].id]));
   function show(section,scroll=false) {
     const group=navigationGroup(section);const panel=$(section);if(!group || !panel)return;
     activeGroup=group.id;remembered.set(group.id,section);dispatchEvent(new CustomEvent('tow:section',{detail:section}));
     document.querySelectorAll('.tab-panel').forEach(p=>p.hidden=p.id!==section);
-    document.querySelectorAll('[data-nav-group]').forEach(b=>{const active=b.dataset.navGroup===group.id;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+    const sectionButtonActive=Boolean(document.querySelector(`#mobile-bottom-nav [data-nav-section="${section}"]`));
+    document.querySelectorAll('[data-nav-group]').forEach(b=>{const active=b.dataset.navGroup===group.id && !(sectionButtonActive && b.closest('#mobile-bottom-nav'));b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+    document.querySelectorAll('[data-nav-section]').forEach(b=>{const active=b.dataset.navSection===section;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
     document.querySelectorAll('.section-navigation [data-tab]').forEach(b=>{const active=b.dataset.tab===section;b.hidden=navigationGroup(b.dataset.tab)?.id!==group.id;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
     const options=group.sections.map(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.label;return o;});
     $('section-select').replaceChildren(...options);$('section-select').value=section;
@@ -22,6 +24,7 @@ export function initNavigation() {
     if(b.closest('#mobile-bottom-nav'))requestAnimationFrame(()=>$(section)?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));
   }));
   document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.tab)));
+  document.querySelectorAll('[data-nav-section]').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.navSection);if(b.closest('#mobile-bottom-nav'))requestAnimationFrame(()=>$(b.dataset.navSection)?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'}));}));
   $('section-select').addEventListener('change',e=>show(e.target.value));
   document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.open,true);if(b.dataset.scroll)$(b.dataset.scroll)?.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}));
   // Ancoragens internas podem abrir uma seção que foi movida para outra área.

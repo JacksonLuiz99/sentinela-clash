@@ -5,6 +5,7 @@ import { initNavigation } from './navigation.js';
 import { initAttention } from './attention.js';
 import { initManagement } from './management.js';
 import { initIntelligence } from './intelligence.js';
+import { initPlayer } from './player.js';
 import { REPORTS, buildExport, createDownload } from './exports.js';
 import { CLANS, DEFAULT_CLAN, findClan, preferredClan } from './clans.js';
 import { performance, mergedHistory, outcome, parseGameTime, publicLinks, podiumHighlights } from './stats.js';
@@ -28,7 +29,7 @@ let reminderOpened=false;
 let activeRequest = 0; let activeController = null;
 const viewCache = new Map();
 const navigation=initNavigation();
-let exportSnapshot = null;let intelligence = null;let management = null;let whatsapp = null;
+let exportSnapshot = null;let intelligence = null;let management = null;let whatsapp = null;let player = null;
 function setClanIdentity(clan = findClan(selectedClan)) {
   $('clan-select').value = selectedClan;navigation.setClan(findClan(selectedClan)?.label || selectedClan);
   $('observed-clan-name').textContent = clan?.name || selectedClan;
@@ -186,7 +187,7 @@ function render(payload) {
     $('donors').classList.remove('empty');$('donors').innerHTML = top.map((m,i) => `<div class="donor"><span>0${i+1}</span><div><strong>${esc(m.name)}</strong><progress value="${Number(m.donations || 0)}" max="${max}" aria-label="${esc(m.name)}: ${num(m.donations)} doações"></progress></div><b>${num(m.donations)}</b></div>`).join('');
     $('donation-total').textContent = `${num(clan.memberList.reduce((n,m) => n+(m.donations || 0),0))} tropas doadas pelos membros atuais nesta temporada.`;
   }
-  management?.render();intelligence?.render();renderRankings();renderHistory();renderEvents(data.events || [],'events');renderEvents((data.events || []).slice(0,4),'recent');
+  management?.render();intelligence?.render();player?.render();renderRankings();renderHistory();renderEvents(data.events || [],'events');renderEvents((data.events || []).slice(0,4),'recent');
   for (const channel of ['telegram','discord']) {
     const enabled = data.channels?.[channel];const delivery = data.delivery?.find(d => d.channel === channel);
     $(`${channel}-state`).textContent = enabled?'AVISOS ATIVOS':'AGUARDANDO CONEXÃO';
@@ -258,6 +259,7 @@ whatsapp = initWhatsApp({getSelectedClan:()=>selectedClan,apiBase:()=>window.CLA
 initAttention({escape:esc,date,openClanSection,showFamily:()=>tab('family',true)});
 management = initManagement({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 intelligence = initIntelligence({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
+player = initPlayer({getData:()=>data,getSelectedClan:()=>selectedClan,defaultTag:DEFAULT_CLAN,escape:esc,date,playerLink,openWar:()=>tab('overview',true)});
 initVersions({escape:esc,openSection:section=>tab(section,true)});
 initPwa({getSelectedClan:()=>selectedClan,apiBase:()=>window.CLAN_CONFIG?.apiBase || '',showSettings:()=>{tab('alerts',true);$('push-panel').scrollIntoView({block:'start'});}});
 $('refresh').addEventListener('click',()=>{refresh();intelligence?.refresh();});switchClan(selectedClan,Boolean(incoming.tag));if(incoming.view)tab(incoming.view);
