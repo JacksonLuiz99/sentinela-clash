@@ -1,6 +1,18 @@
 // Datas históricas vêm dos registros das mudanças; não representam necessariamente o minuto exato do deploy.
 export const RELEASES = Object.freeze([
   {
+    "version": "2026.11.19.15",
+    "recordedAt": "2026-11-19T17:44:04.000Z",
+    "title": "Painel mais direto para quem joga",
+    "changes": [
+      "Quem já salvou a tag abre o painel direto em Meu início. Quem ainda não salvou vê um convite para isso no Campo de batalha.",
+      "O menu inferior do celular tem Início, Família, Clã e Mais. Em Mais, fica a área de Liderança e avisos.",
+      "A janela de Texto para WhatsApp mostra só a explicação quando não há cobrança disponível, sem caixa de texto vazia.",
+      "A mensagem no topo do painel diz quando os dados foram atualizados e o que fazer se ainda não estiverem atualizados."
+    ],
+    "section": "player"
+  },
+  {
     "version": "2026.11.19.14",
     "recordedAt": "2026-11-19T17:36:47.000Z",
     "title": "Ajustes em Meu início",

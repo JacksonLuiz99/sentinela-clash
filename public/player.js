@@ -143,6 +143,8 @@ export function initPlayer({getData, getSelectedClan, defaultTag, escape:esc, da
   function render() {
     const tag = readPlayerTag();
     const payload = getData();
+    const invite = document.getElementById('player-invite');
+    if (invite) invite.hidden = Boolean(tag);
     const clan = payload?.current?.clan;
     const showForm = !tag || editing;
     formArea.hidden = !showForm;

@@ -1,7 +1,7 @@
 import {initVersions} from './versions.js';
 import { initPwa, notificationLink } from './pwa.js';
 import { initWhatsApp } from './whatsapp.js';
-import { initNavigation } from './navigation.js';
+import { initNavigation, homeSection } from './navigation.js';
 import { initAttention } from './attention.js';
 import { initManagement } from './management.js';
 import { initIntelligence } from './intelligence.js';
@@ -57,7 +57,7 @@ function switchClan(tag, persist = true) {
   if(persist) {try {localStorage.setItem(CLAN_STORAGE, selectedClan);} catch { /* A troca continua funcionando. */ }}
   clearClanData();setClanIdentity();
   if(viewCache.has(selectedClan)) render(viewCache.get(selectedClan));
-  refresh();tab('overview');
+  refresh();tab(homeSection());
 }
 $('clan-select').replaceChildren(...CLANS.map(clan => {const option=document.createElement('option');option.value=clan.tag;option.textContent=`${clan.label || clan.name} · ${clan.tag}`;return option;}));
 $('clan-select').addEventListener('change',event=>switchClan(event.target.value));
@@ -171,7 +171,12 @@ function render(payload) {
   const warStale = current?.war && (!current.warCapturedAt || Date.now()-current.warCapturedAt > (data.collectionIntervalMinutes || 5)*2*60000);
   const ok = health.code === 'ok' && !stale;
   $('status').classList.toggle('warn',!ok || Boolean(warStale));
-  $('status').textContent = clan ? `${ok?'MONITOR CONECTADO':'COLETA COM PENDÊNCIAS'} · ${date(current.capturedAt)} · horário de Cuiabá · ${data.monitoringMode === 'on_demand'?'consulta no painel, cache de até 5 min':`consultas automáticas a cada ${data.collectionIntervalMinutes || 5} min`}${stale?' · dados desatualizados':''}${warStale?' · guerra aguardando atualização':''}` : 'Aguardando conexão com o monitor do clã.';
+  const interval = data.collectionIntervalMinutes || 5;
+  $('status').textContent = clan
+    ? (ok && !warStale
+      ? `Dados atualizados em ${date(current.capturedAt)} (horário de Cuiabá). Atualização automática a cada ${interval} min.`
+      : `Dados de ${date(current.capturedAt)} (horário de Cuiabá). ${stale ? 'O painel pode estar atrasado' : 'A guerra ainda não foi confirmada'}: aguarde alguns minutos ou toque em ↻ para atualizar.`)
+    : 'Conectando ao monitor do clã. Isso pode levar alguns segundos.';
   if (clan) {
     $('metric-wins').textContent = num(clan.warWins);$('metric-members').textContent = `${clan.members}/50`;
     $('metric-trophies').textContent = num(clan.clanPoints);$('metric-level').textContent = `CLÃ NÍVEL ${clan.clanLevel}`;

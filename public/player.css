@@ -1,4 +1,7 @@
 .player-status{margin-top:8px}
+.player-invite{display:grid;gap:12px;margin-bottom:20px;border-top:3px solid var(--gold)}
+.player-invite p{margin:0;line-height:1.6}
+.player-invite .button{min-height:44px}
 .player-card{display:grid;gap:14px;border-top:3px solid var(--orange)}
 .player-card h3{font-family:var(--display);font-size:1.75rem;letter-spacing:.6px;margin:0;overflow-wrap:anywhere}
 .player-card .eyebrow{margin:0}
