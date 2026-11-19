@@ -44,7 +44,7 @@ function switchClan(tag, persist = true) {
   if(viewCache.has(selectedClan)) render(viewCache.get(selectedClan));
   refresh();
 }
-$('clan-select').replaceChildren(...CLANS.map(clan => {const option=document.createElement('option');option.value=clan.tag;option.textContent=`${clan.name} · ${clan.tag}`;return option;}));
+$('clan-select').replaceChildren(...CLANS.map(clan => {const option=document.createElement('option');option.value=clan.tag;option.textContent=`${clan.label || clan.name} · ${clan.tag}`;return option;}));
 $('clan-select').addEventListener('change',event=>switchClan(event.target.value));
 addEventListener('storage',event=>{if(event.key===CLAN_STORAGE || event.key===null){let tag=DEFAULT_CLAN;try{tag=preferredClan(localStorage.getItem(CLAN_STORAGE));}catch{}if(tag!==selectedClan)switchClan(tag,false);}});
 function tab(name, scroll = false) {

@@ -46,20 +46,26 @@ A tipografia usa unidades relativas para que o controle afete todas as seções.
 
 ## Família TIGERS: seleção de clã
 
-O seletor oferece os dez clãs confirmados na API:
+O seletor oferece os 16 clãs confirmados na API, na ordem informada pela família. Os nomes curtos organizam a seleção; o painel mostra o nome oficial do jogo.
 
-| Clã | Tag |
-| --- | --- |
-| TIGERS OF WAR 4 | #R0UPVVVY |
-| TOW TEAM tm | #29P0V8VCG |
-| TIGERS OF WAR | #28L88PQ2 |
-| TOW-eSports | #2PG9PV22C |
-| TIGERS OF WAR 5 | #202YP22U9 |
-| TIGERS OF WAR 8 | #28R20CPP8 |
-| TOW FORMATION | #2GY9JPQY2 |
-| TIGERS OF WAR 3 | #QC9RY8GJ |
-| TOW-eVolution™ | #2LUJ0V08L |
-| TOW ACADEMY | #2QLGRU29U |
+| Nome no seletor | Nome no jogo | Tag |
+| --- | --- | --- |
+| iTOW | iTOW Gaming | #2Y0P809CU |
+| Tigers Champion | TIGERS CHAMPION | #2YJLQRLYL |
+| TOW 1 | TIGERS OF WAR | #28L88PQ2 |
+| TOW 2 | TIGERS OF WAR 2 | #992PPYP9 |
+| TOW 3 | TIGERS OF WAR 3 | #QC9RY8GJ |
+| TOW 4 | TIGERS OF WAR 4 | #R0UPVVVY |
+| TOW 5 | TIGERS OF WAR 5 | #202YP22U9 |
+| TOW 6 | TIGERS OF WAR 6 | #222RQ2C22 |
+| TOW 8 | TIGERS OF WAR 8 | #28R20CPP8 |
+| TOW 9 | TIGERS OF WAR 9 | #2P0Y8JRUL |
+| TOW Academy | TOW ACADEMY | #2QLGRU29U |
+| TOW Formation | TOW FORMATION | #2GY9JPQY2 |
+| TOW Team | TOW TEAM tm | #29P0V8VCG |
+| TOW Sport | TOW-eSports | #2PG9PV22C |
+| TOW Evo | TOW-eVolution™ | #2LUJ0V08L |
+| Trairi CE | TRAIRI-CE | #92RJJJ0Y |
 
 A última escolha fica na chave `tigers-last-clan` do localStorage, independentemente do tema e da fonte. Uma preferência inválida retorna ao TIGERS OF WAR 4. A troca cancela a consulta anterior, limpa os dados exibidos e verifica a tag da resposta antes de atualizar a tela. O botão para abrir o clã no jogo também acompanha a seleção.
 

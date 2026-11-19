@@ -34,11 +34,14 @@ function mockFamilyApi() {
 }
 function env(DB){return {DB,CLAN_TAG:DEFAULT_CLAN,CLASH_API_TOKEN:'test-secret',TELEGRAM_BOT_TOKEN:'123:secret',TELEGRAM_CHAT_ID:'-123',DISCORD_WEBHOOK_URL:'https://discord.com/api/webhooks/123/secret'};}
 
-test('catálogo contém os dez clãs e valida preferências antigas e novas',()=>{
-  assert.equal(CLANS.length,10);assert.equal(preferredClan(a.toLowerCase()),a);
+test('catálogo contém os 16 clãs e valida preferências antigas e novas',()=>{
+  assert.equal(CLANS.length,16);assert.equal(new Set(CLANS.map(c=>c.tag)).size,16);assert.equal(preferredClan(a.toLowerCase()),a);
   assert.equal(findClan('#2GY9JPQY2').name,'TOW FORMATION');
   assert.equal(preferredClan('#qc9ry8gj'),'#QC9RY8GJ');
   assert.equal(findClan('#2LUJ0V08L').name,'TOW-eVolution™');
+  assert.equal(findClan('#28L88PQ2').label,'TOW 1');
+  assert.equal(findClan('#28L88PQ2').name,'TIGERS OF WAR');
+  for(const tag of ['#2Y0P809CU','#2YJLQRLYL','#992PPYP9','#222RQ2C22','#2P0Y8JRUL','#92RJJJ0Y']) assert.equal(preferredClan(tag),tag);
   assert.equal(preferredClan('#2qlgru29u'),'#2QLGRU29U');
   assert.equal(preferredClan('javascript:alert(1)'),DEFAULT_CLAN);
   assert.equal(preferredClan('#UNKNOWN'),DEFAULT_CLAN);assert.equal(findClan(null),null);
