@@ -45,7 +45,7 @@ export function initIntelligence({getData,switchClan,escape:esc,num,date,apiBase
         const state=stale?'COLETA PENDENTE':!warFresh?'GUERRA INDISPONÍVEL':({inWar:'EM GUERRA',preparation:'PREPARAÇÃO',warEnded:'ENCERRADA'})[c.war?.state] || 'SEM GUERRA ATIVA';
         return `<article class="panel family-card"><div class="panel-head"><h3>${esc(c.label)}</h3><span class="tag ${!stale && warFresh && c.war?.state==='inWar'?'good':''}">${esc(state)}</span></div><p>${esc(c.name)}</p><span>${esc(c.tag)}</span><dl><div><dt>Tropa</dt><dd>${num(c.members)}/50</dd></div><div><dt>Liga</dt><dd>${esc(c.league || '—')}</dd></div><div><dt>Troféus</dt><dd>${num(c.trophies)}</dd></div></dl>${c.war && warFresh?`<p>Contra ${esc(c.war.opponent)} · ${num(c.war.stars)} × ${num(c.war.enemyStars)} ★${c.war.state==='inWar'?` · ${num(c.war.pending)} ataques pendentes`:''}</p>`:''}<p class="coverage">${c.capturedAt?`Coleta: ${date(c.capturedAt)}`:'Aguardando primeira coleta automática.'}</p><button class="outline-button" data-observe="${esc(c.tag)}">Observar ${esc(c.label)}</button></article>`;
       }).join('');lastFamily=now;
-    } catch {$('family-note').textContent='A visão da família está temporariamente indisponível. Tente atualizar novamente.';}
+    } catch {dispatchEvent(new CustomEvent('tow:family-error'));$('family-note').textContent='A visão da família está temporariamente indisponível. Tente atualizar novamente.';}
     finally {familyBusy=false;$('family-refresh').disabled=false;}
   }
   $('family-refresh').addEventListener('click',()=>refreshFamily(true));
@@ -86,5 +86,5 @@ export function initIntelligence({getData,switchClan,escape:esc,num,date,apiBase
   for(const id of ['analysis-period','analysis-th','analysis-matchup'])$(id).addEventListener('change',renderAnalysis);
   $('raid-period').addEventListener('change',renderRaid);
   refreshFamily();setInterval(()=>{if(!document.hidden)refreshFamily();},60000);
-  return {render(){renderAnalysis();renderRaid();},clear(){$('warrior-dialog').close();renderAnalysis();renderRaid();}};
+  return {refresh:()=>refreshFamily(true),render(){renderAnalysis();renderRaid();},clear(){$('warrior-dialog').close();renderAnalysis();renderRaid();}};
 }

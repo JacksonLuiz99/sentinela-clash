@@ -86,7 +86,7 @@ export function clanSummary(tag,saved) {
   return {tag,name:clan?.name || findClan(tag)?.name,members:clan?.members ?? null,league:clan?.warLeague?.name,
     level:clan?.clanLevel,requiredTH:clan?.requiredTownhallLevel,requiredTrophies:clan?.requiredTrophies,requiredLeague:clan?.requiredLeagueTier?.name,type:clan?.type,description:clan?.description,capitalLevel:clan?.clanCapital?.capitalHallLevel,capitalPoints:clan?.clanCapitalPoints,capitalLeague:clan?.capitalLeague?.name,
     donations:clan?.memberList?.reduce((n,m)=>n+(m.donations || 0),0),townHalls:(clan?.memberList || []).reduce((counts,m)=>{const th=m.townHallLevel || 0;counts[th]=(counts[th] || 0)+1;return counts;},{}),
-    trophies:clan?.clanPoints,capturedAt:saved?.current?.capturedAt || null,health:saved?.health?.code || 'awaiting_first_sync',
+    trophies:clan?.clanPoints,capturedAt:saved?.current?.capturedAt || null,health:saved?.health?.code || 'awaiting_first_sync',lastAttempt:saved?.health?.lastAttempt || null,
     warCapturedAt:saved?.current?.warCapturedAt || null,
     war:war ? {state:war.state,kind:war.kind,opponent:war.opponent?.name,stars:war.clan?.stars,enemyStars:war.opponent?.stars,
       endAt:gameTime(war.endTime),pending:war.state==='inWar'?(war.clan?.members || []).reduce((n,m)=>n+Math.max(0,limit-(m.attacks?.length || 0)),0):0}:null};
@@ -108,7 +108,11 @@ export async function recordPrimarySummary(env,now=Date.now()) {
   await env.DB.batch([stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,{current,health})),stateStatement(env.DB,'timeline',next)]);
 }
 export async function familyOverview(env,now=Date.now()) {
-  const rows=await env.DB.prepare("SELECT value FROM state WHERE key LIKE 'summary:%'").all();
+  const [rows,goalRows]=await Promise.all([
+    env.DB.prepare("SELECT value FROM state WHERE key LIKE 'summary:%'").all(),
+    env.DB.prepare('SELECT clan_tag,payload FROM clan_goals').all()
+  ]);
+  const goals=new Map(goalRows.results.map(r=>[r.clan_tag,JSON.parse(r.payload)]));
   const summaries=new Map(rows.results.map(r=>{const s=JSON.parse(r.value);return [s.tag,s];}));
-  return {generatedAt:now,intervalMinutes:15,clans:CLANS.map(c=>({...c,...summaries.get(c.tag)}))};
+  return {generatedAt:now,intervalMinutes:15,clans:CLANS.map(c=>({...c,...summaries.get(c.tag),goals:goals.get(c.tag) || null}))};
 }

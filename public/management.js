@@ -59,7 +59,7 @@ export function initManagement({getData,apiBase,escape:esc,num,date,switchClan})
   async function refreshMoves() {try{const payload=await get('/api/management');moves=payload.moves;renderMoves();$('moves-status').textContent='Até 500 movimentos recentes, retidos por 90 dias. Possíveis transferências relacionam uma única entrada e saída da mesma tag em clãs diferentes num intervalo de até 48h; não confirmam transferência direta. Horários são de detecção.';}catch(e){$('moves-status').textContent=e.message;}}
   async function loadConfig() {
     const tag=getData()?.clanTag;if(!tag)return;const version=++configVersion;
-    try {const payload=await get('/api/clan-management?clan='+encodeURIComponent(tag));if(version!==configVersion||getData()?.clanTag!==tag)return;config=payload;renderGoals();renderManual();}
+    try {const payload=await get('/api/clan-management?clan='+encodeURIComponent(tag));if(version!==configVersion||getData()?.clanTag!==tag)return;config=payload;dispatchEvent(new CustomEvent('tow:goals',{detail:{clanTag:tag,goals:config.goals}}));renderGoals();renderManual();}
     catch(e){if(version===configVersion){$('goals-list').innerHTML=empty(e.message);$('manual-list').innerHTML=empty(e.message);}}
   }
   function renderGoals() {
@@ -90,7 +90,7 @@ export function initManagement({getData,apiBase,escape:esc,num,date,switchClan})
   }
   $('goals-form').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;busy=true;$('goals-save').disabled=true;
     const tag=getData()?.clanTag;
-    try {const goals=await post('/api/goals',{clanTag:tag,revision:goalRevision,startDate:$('goal-start').value,endDate:$('goal-end').value,donationTarget:Number($('goal-donations').value),raidTarget:Number($('goal-raids').value)});if(getData()?.clanTag===tag){configVersion++;config={...config,goals};goalRevision=goals.revision;renderGoals();$('leadership-error').textContent='Metas salvas.';}}
+    try {const goals=await post('/api/goals',{clanTag:tag,revision:goalRevision,startDate:$('goal-start').value,endDate:$('goal-end').value,donationTarget:Number($('goal-donations').value),raidTarget:Number($('goal-raids').value)});if(getData()?.clanTag===tag){configVersion++;config={...config,goals};goalRevision=goals.revision;dispatchEvent(new CustomEvent('tow:goals',{detail:{clanTag:tag,goals}}));renderGoals();$('leadership-error').textContent='Metas salvas.';}}
     catch(error){$('leadership-error').textContent=error.message;}finally{busy=false;$('goals-save').disabled=false;}
   });
   function resetManual() {
@@ -134,6 +134,7 @@ export function initManagement({getData,apiBase,escape:esc,num,date,switchClan})
   for(const id of ['moves-clan','moves-kind'])$(id).addEventListener('change',renderMoves);$('moves-search').addEventListener('input',renderMoves);
   for(const id of ['recruit-th','recruit-trophies','recruit-vacancies'])$(id).addEventListener('input',renderRecruitment);
   $('recruit-list').addEventListener('click',e=>{const b=e.target.closest('[data-operations-clan]');if(b)switchClan(b.dataset.operationsClan);});
+  addEventListener('tow:section',e=>{if(e.detail==='leadership')loadConfig();});
   $('operations-refresh').addEventListener('click',()=>{refreshMoves();loadConfig();});
   resetManual();refreshMoves();setInterval(()=>{if(!document.hidden){refreshMoves();loadConfig();}},120000);
   return {render(){const data=getData();if(clanTag!==data?.clanTag){clanTag=data?.clanTag;config=null;$('goals-note').textContent='';renderGoals();renderManual();resetManual();lock();loadConfig();}else renderGoals();$('operations-clan').textContent=label(clanTag);$('warrior-tags').innerHTML=(data?.current?.clan?.memberList || []).map(m=>`<option value="${esc(m.tag)}">${esc(m.name)}</option>`).join('');},clear(){configVersion++;clanTag=null;config=null;evolutionController?.abort();$('leadership-dialog').close();lock();$('goals-note').textContent='';$('goals-list').innerHTML=empty('Selecione um clã com dados carregados.');$('manual-list').innerHTML=empty('Carregando registros deste clã…');$('manual-download').disabled=true;}};

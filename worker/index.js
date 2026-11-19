@@ -55,7 +55,7 @@ export async function route(request,env) {
   if (path === '/api/sync' && request.method === 'POST') {
     if (!await authorized(request,env.ADMIN_TOKEN)) return json({error:'unauthorized'},401,headers);
     const result=await synchronize(env);
-    if(result.ok) await recordPrimarySummary(env);
+    await recordPrimarySummary(env);
     return json(result,result.ok?200:result.code==='sync_busy'?409:503,headers);
   }
   if(path === '/api/family' && request.method === 'GET') {
@@ -93,6 +93,6 @@ export default {
   fetch: route,
   scheduled(controller,env,ctx) {
     const now=controller.scheduledTime || Date.now();
-    ctx.waitUntil(controller.cron === '* * * * *' ? synchronizeFamily(env,now) : synchronize(env,now).then(async result=>{if(result.ok)await recordPrimarySummary(env,now);return result;}));
+    ctx.waitUntil(controller.cron === '* * * * *' ? synchronizeFamily(env,now) : synchronize(env,now).then(async result=>{await recordPrimarySummary(env,now);return result;}));
   }
 };

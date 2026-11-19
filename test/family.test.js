@@ -123,3 +123,18 @@ test('resumo do principal e série diária usam dados existentes sem enviar avis
   assert.equal((await familyOverview(env(DB),now)).clans.find(c=>c.tag===DEFAULT_CLAN).members,48);
   assert.equal((await readState(DB,'timeline'))[0].members,48);DB.close();
 });
+
+test('resumo público da família inclui metas por clã sem consultar a API do jogo',async()=>{
+  const DB=database();const calls=mockFamilyApi();const goals={clanTag:a,startDate:'2026-11-18',endDate:'2026-11-19',donationTarget:500,raidTarget:6};
+  await DB.prepare('INSERT INTO clan_goals(clan_tag,revision,updated_at,payload) VALUES (?,1,?,?)').bind(a,now,JSON.stringify(goals)).run();
+  const overview=await familyOverview(env(DB),now);assert.deepEqual(overview.clans.find(c=>c.tag===a).goals,goals);assert.equal(overview.clans.find(c=>c.tag===b).goals,null);assert.equal(calls.length,0);DB.close();
+});
+
+test('falha de sincronização do principal também atualiza a saúde no resumo público',async()=>{
+  const DB=database();const current={clan:{tag:DEFAULT_CLAN,name:'Principal',members:0,memberList:[]},war:null,capturedAt:Date.now()-60000,warCapturedAt:Date.now()-60000};
+  await stateStatement(DB,'current',current).run();await stateStatement(DB,'health',{code:'ok',lastSuccess:current.capturedAt,lastAttempt:current.capturedAt}).run();
+  globalThis.fetch=async()=>Response.json({},{status:503});const config={...env(DB),ADMIN_TOKEN:'a'.repeat(40)};
+  const response=await route(new Request('https://worker.test/api/sync',{method:'POST',headers:{Authorization:'Bearer '+config.ADMIN_TOKEN}}),config);
+  assert.equal(response.status,503);const summary=(await familyOverview(config)).clans.find(c=>c.tag===DEFAULT_CLAN);
+  assert.equal(summary.health,'api_http_503');assert.ok(summary.lastAttempt>summary.capturedAt);DB.close();
+});

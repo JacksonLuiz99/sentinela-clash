@@ -1,3 +1,5 @@
+import { initNavigation } from './navigation.js';
+import { initAttention } from './attention.js';
 import { initManagement } from './management.js';
 import { initIntelligence } from './intelligence.js';
 import { REPORTS, buildExport, createDownload } from './exports.js';
@@ -20,9 +22,10 @@ let selectedClan = DEFAULT_CLAN;
 try { selectedClan = preferredClan(localStorage.getItem(CLAN_STORAGE)); } catch { /* Funciona mesmo sem armazenamento local. */ }
 let activeRequest = 0; let activeController = null;
 const viewCache = new Map();
+const navigation=initNavigation();
 let exportSnapshot = null;let intelligence = null;let management = null;
 function setClanIdentity(clan = findClan(selectedClan)) {
-  $('clan-select').value = selectedClan;
+  $('clan-select').value = selectedClan;navigation.setClan(findClan(selectedClan)?.label || selectedClan);
   $('observed-clan-name').textContent = clan?.name || selectedClan;
   $('observed-clan-tag').textContent = selectedClan;
   document.title = `${clan?.name || selectedClan} · Família TIGERS`;
@@ -52,14 +55,13 @@ function switchClan(tag, persist = true) {
 $('clan-select').replaceChildren(...CLANS.map(clan => {const option=document.createElement('option');option.value=clan.tag;option.textContent=`${clan.label || clan.name} · ${clan.tag}`;return option;}));
 $('clan-select').addEventListener('change',event=>switchClan(event.target.value));
 addEventListener('storage',event=>{if(event.key===CLAN_STORAGE || event.key===null){let tag=DEFAULT_CLAN;try{tag=preferredClan(localStorage.getItem(CLAN_STORAGE));}catch{}if(tag!==selectedClan)switchClan(tag,false);}});
-function tab(name, scroll = false) {
-  const panel = $(name); if (!panel?.classList.contains('tab-panel')) return;
-  document.querySelectorAll('.tab-panel').forEach(p => p.hidden = p.id !== name);
-  document.querySelectorAll('.nav').forEach(b => {const selected = b.dataset.tab === name;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected));});
-  if (scroll) document.querySelector('.command-bar').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+function tab(name,scroll=false){navigation.show(name,scroll);}
+function openClanSection(tag,section,anchor){
+  if(tag!==selectedClan)switchClan(tag);
+  tab(section,true);
+  const target=document.getElementById(anchor || section);
+  if(target){target.setAttribute('tabindex','-1');requestAnimationFrame(()=>{target.focus({preventScroll:true});target.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});});}
 }
-document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click',() => tab(b.dataset.tab)));
-document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click',() => {tab(b.dataset.open,true);if(b.dataset.scroll) $(b.dataset.scroll)?.scrollIntoView({block:'start',behavior:'smooth'});}));
 
 function renderLinks(links) {
   const safe = publicLinks({DISCORD_PUBLIC_URL:links?.discord,TELEGRAM_PUBLIC_URL:links?.telegram});
@@ -245,7 +247,8 @@ async function refresh() {
     if (!data?.current) $('setup').hidden = false;
   } finally {clearTimeout(timer);if(requestId===activeRequest){busy = false;$('refresh').disabled = false;}}
 }
+initAttention({escape:esc,date,openClanSection,showFamily:()=>tab('family',true)});
 management = initManagement({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 intelligence = initIntelligence({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
-$('refresh').addEventListener('click',refresh);switchClan(selectedClan,false);
+$('refresh').addEventListener('click',()=>{refresh();intelligence?.refresh();});switchClan(selectedClan,false);
 setInterval(() => {if(!document.hidden) refresh();},60000);setInterval(() => {if(!document.hidden) updateClock();},1000);

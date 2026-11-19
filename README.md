@@ -256,3 +256,16 @@ A coleta do roster ocorre com as coletas existentes dos clãs e continua quando 
 4. A chave fica apenas em memória durante a janela aberta; fechar, pressionar Escape, bloquear ou trocar de clã remove a chave. Não é salva em localStorage, sessão, URL ou bundle. Os resultados e metas são públicos; a gravação exige a chave no cabeçalho Authorization. A chave autoriza administração dos 16 clãs e deve ser distribuída apenas à liderança autorizada.
 
 Rotas públicas: `GET /api/management`, `GET /api/player-evolution?player=%23TAG` e `GET /api/clan-management?clan=%23TAG`. Rotas protegidas: `POST /api/leadership` (verificação), `POST /api/goals` e `POST /api/manual-wars`. A chave de sincronização não libera a liderança. JSON de gravação é limitado a 64 KiB; validações ocorrem no servidor, e revisões desatualizadas recebem HTTP 409. Não há novas notificações ou destinos configurados nesta etapa.
+
+## Prioridades e navegação
+
+O painel reúne as seções em **Família**, **Clã** e **Liderança**. No celular, um seletor exibe as seções da área escolhida; em telas maiores, os botões da área ficam visíveis. A seção visitada em cada área é lembrada durante a página aberta. A preferência do clã continua em `tigers-last-clan`, e mudar de área não modifica o clã nem libera a edição protegida.
+
+O resumo **O que precisa de atenção?** aparece antes das seções, com filtros e acesso direto ao clã correto:
+
+- Ataques pendentes só entram quando o perfil e a guerra têm captura recente, a coleta está `ok`, a guerra está em andamento e o término ainda está no futuro. A janela é de dez minutos para TOW 4 e trinta para os demais. Confrontos cujo horário já terminou aguardam nova coleta, sem continuar cobrando ataques antigos. Guerras próximas do término aparecem primeiro.
+- Metas em vigência, com pelo menos um objetivo ativo, geram lembrete nas últimas 48 horas. O lembrete pede revisão do progresso e não afirma descumprimento. As metas públicas por clã são incluídas em `/api/family`; atualizações no formulário também atualizam o resumo local.
+- Ausência de captura, dados antigos e falha na última atualização do perfil geram prioridades de coleta. A última tentativa também é propagada ao resumo do TOW 4 quando sua sincronização falha.
+- Guerras privadas, Liga parcial e guerra sem atualização recente ficam numa área separada de limitações, sem inventar pendências. Uma falha ao consultar o resumo conserva a captura anterior, sinaliza o problema e continua descartando dados conforme envelhecem.
+
+O resumo usa as consultas já existentes de família, com uma leitura adicional das metas no D1; não dispara consultas a novas fontes da API Clash ou novas notificações. O botão de atualização do painel também relê a visão da família.
