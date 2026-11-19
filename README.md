@@ -234,3 +234,25 @@ As configurações são aplicadas após nova publicação. O painel de alertas m
 `.dev.vars`, `.env*`, `.wrangler`, `.vercel`, dependências e build não são versionados. Nenhum segredo vai para o navegador. `/api/sync` só aceita POST autenticado; a API pública só lê dados já coletados. Nomes dos jogadores são escapados na interface. Logs persistem apenas códigos internos de falha.
 
 Projeto independente, sem vínculo com Supercell. Consulte a [Fan Content Policy](https://supercell.com/en/fan-content-policy/).
+
+## Comando da tropa
+
+A aba **Comando da tropa** reúne recrutamento, composição por CV, comparação de dois clãs, movimentações, metas e guerras manuais. Requisitos e vagas vêm dos perfis públicos; cumprir os campos informados não garante aprovação nem verifica automaticamente a liga do candidato. Resumos antigos exibem a data da coleta.
+
+A migração `0002_management.sql` adiciona:
+
+- `roster_days`: última captura por dia UTC e clã, por até 32 dias; guarda apenas tag, nome, CV, troféus, doações e recebidas. O perfil do guerreiro mostra a evolução na família. Capturas independentes não comprovam presença simultânea em dois clãs.
+- `roster_moves`: entradas/saídas observadas, retidas por 90 dias; a API retorna os últimos 500 eventos. A primeira coleta é referência. Possível transferência exige par único de entrada/saída da mesma tag em clãs distintos dentro de 48h, nos dois sentidos da associação. Não prova transferência direta, nem ausência de passagem por outro clã.
+- `clan_goals`: metas de doações por temporada e ataques da Capital, com vigência em UTC e revisão. O progresso de doações usa o contador da API e reinicia com ele. Ausentes no registro da Capital ficam sem amostra, não com zero; o fim de semana deve ter iniciado na vigência.
+- `manual_wars`: placares e ataques ofensivos de guerras encerradas, com origem manual, validação de limites e revisão otimista. São exibidos em seção própria, com download de placares em CSV. Não são mesclados aos rankings automáticos ou às estrelas oficiais, evitando dupla contagem e confusão de origem. Até 50 registros recentes por clã são exibidos.
+
+A coleta do roster ocorre com as coletas existentes dos clãs e continua quando a guerra é privada. Não mede tempo online e não recupera eventos anteriores ao início da captura. O resumo da família também guarda requisitos de entrada, distribuição por CV e indicadores da Capital, sem consultar dados privados da guerra.
+
+### Edição protegida
+
+1. Aplique as migrações com `npm run db:remote` antes de publicar a versão.
+2. Execute `node scripts/setup-leadership.mjs`. Ele gera uma chave aleatória dedicada, guarda `LEADERSHIP_TOKEN` em `.dev.vars` (permissão 600, ignorado pelo Git) e envia somente essa chave por stdin ao Cloudflare. Não imprime o valor e não altera as credenciais existentes. Nova execução reaproveita a chave local; para rotação, o administrador deve substituir a chave local e executar novamente.
+3. No painel, selecione o clã, abra **Comando da tropa → Área da liderança** e informe `LEADERSHIP_TOKEN`. Não é o token da API Clash nem `ADMIN_TOKEN`.
+4. A chave fica apenas em memória durante a janela aberta; fechar, pressionar Escape, bloquear ou trocar de clã remove a chave. Não é salva em localStorage, sessão, URL ou bundle. Os resultados e metas são públicos; a gravação exige a chave no cabeçalho Authorization. A chave autoriza administração dos 16 clãs e deve ser distribuída apenas à liderança autorizada.
+
+Rotas públicas: `GET /api/management`, `GET /api/player-evolution?player=%23TAG` e `GET /api/clan-management?clan=%23TAG`. Rotas protegidas: `POST /api/leadership` (verificação), `POST /api/goals` e `POST /api/manual-wars`. A chave de sincronização não libera a liderança. JSON de gravação é limitado a 64 KiB; validações ocorrem no servidor, e revisões desatualizadas recebem HTTP 409. Não há novas notificações ou destinos configurados nesta etapa.

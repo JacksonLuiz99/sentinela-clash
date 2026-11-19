@@ -14,6 +14,7 @@ const a = '#29P0V8VCG';const b = '#28L88PQ2';
 function database() {
   const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON');
   sql.exec(readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));
+  sql.exec(readFileSync(new URL('../migrations/0002_management.sql',import.meta.url),'utf8'));
   const statement=(query,args=[])=>({bind(...values){return statement(query,values);},async first(){return sql.prepare(query).get(...args)||null;},async all(){return {results:sql.prepare(query).all(...args)};},async run(){const r=sql.prepare(query).run(...args);return {meta:{changes:Number(r.changes)}};}});
   return {prepare:q=>statement(q),async batch(statements){for(const s of statements)await s.run();},close:()=>sql.close()};
 }

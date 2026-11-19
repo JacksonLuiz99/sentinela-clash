@@ -1,3 +1,4 @@
+import { initManagement } from './management.js';
 import { initIntelligence } from './intelligence.js';
 import { REPORTS, buildExport, createDownload } from './exports.js';
 import { CLANS, DEFAULT_CLAN, findClan, preferredClan } from './clans.js';
@@ -19,7 +20,7 @@ let selectedClan = DEFAULT_CLAN;
 try { selectedClan = preferredClan(localStorage.getItem(CLAN_STORAGE)); } catch { /* Funciona mesmo sem armazenamento local. */ }
 let activeRequest = 0; let activeController = null;
 const viewCache = new Map();
-let exportSnapshot = null;let intelligence = null;
+let exportSnapshot = null;let intelligence = null;let management = null;
 function setClanIdentity(clan = findClan(selectedClan)) {
   $('clan-select').value = selectedClan;
   $('observed-clan-name').textContent = clan?.name || selectedClan;
@@ -30,7 +31,7 @@ function setClanIdentity(clan = findClan(selectedClan)) {
 }
 function clearClanData() {
   $('export-dialog').close();exportSnapshot = null;$('open-export').disabled = true;$('download-message').textContent = '';
-  data = null;intelligence?.clear();
+  data = null;intelligence?.clear();management?.clear();
   for (const id of ['metric-wins','metric-members','metric-trophies','metric-league','metric-level','metric-streak']) $(id).textContent = '—';
   $('clan-meta').replaceChildren();$('clan-description').textContent = '';$('clan-requirements').replaceChildren();$('donation-total').textContent = '';
   renderWar(null);$('war-state').textContent = 'CARREGANDO';$('war-summary').innerHTML = empty('Consultando a guerra deste clã…');
@@ -177,7 +178,7 @@ function render(payload) {
     $('donors').classList.remove('empty');$('donors').innerHTML = top.map((m,i) => `<div class="donor"><span>0${i+1}</span><div><strong>${esc(m.name)}</strong><progress value="${Number(m.donations || 0)}" max="${max}" aria-label="${esc(m.name)}: ${num(m.donations)} doações"></progress></div><b>${num(m.donations)}</b></div>`).join('');
     $('donation-total').textContent = `${num(clan.memberList.reduce((n,m) => n+(m.donations || 0),0))} tropas doadas pelos membros atuais nesta temporada.`;
   }
-  intelligence?.render();renderRankings();renderHistory();renderEvents(data.events || [],'events');renderEvents((data.events || []).slice(0,4),'recent');
+  management?.render();intelligence?.render();renderRankings();renderHistory();renderEvents(data.events || [],'events');renderEvents((data.events || []).slice(0,4),'recent');
   for (const channel of ['telegram','discord']) {
     const enabled = data.channels?.[channel];const delivery = data.delivery?.find(d => d.channel === channel);
     $(`${channel}-state`).textContent = enabled?'AVISOS ATIVOS':'AGUARDANDO CONEXÃO';
@@ -244,6 +245,7 @@ async function refresh() {
     if (!data?.current) $('setup').hidden = false;
   } finally {clearTimeout(timer);if(requestId===activeRequest){busy = false;$('refresh').disabled = false;}}
 }
+management = initManagement({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 intelligence = initIntelligence({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 $('refresh').addEventListener('click',refresh);switchClan(selectedClan,false);
 setInterval(() => {if(!document.hidden) refresh();},60000);setInterval(() => {if(!document.hidden) updateClock();},1000);

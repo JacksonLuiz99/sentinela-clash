@@ -37,7 +37,7 @@ export function initIntelligence({getData,switchClan,escape:esc,num,date,apiBase
     familyBusy=true;$('family-refresh').disabled=true;
     try {
       const response=await fetch(`${apiBase()}/api/family`,{signal:AbortSignal.timeout(20000)});if(!response.ok)throw new Error();
-      const payload=await response.json();const now=Date.now();const totals=familyTotals(payload.clans,now);
+      const payload=await response.json();dispatchEvent(new CustomEvent('tow:family',{detail:payload}));const now=Date.now();const totals=familyTotals(payload.clans,now);
       $('family-metrics').innerHTML=metric('Membros · coletas recentes',num(totals.members))+metric('Vagas · coletas recentes',num(totals.vacancies))+metric('Guerras em andamento',num(totals.wars))+metric('Ataques pendentes',num(totals.pending));
       $('family-note').textContent=`${totals.fresh}/${payload.clans.length} clãs com coleta nos últimos 30 min. Ciclo automático de aproximadamente 15 min; TOW 4 a cada 5 min. Totais excluem coletas antigas. Guerras privadas podem não estar disponíveis.`;
       $('family-grid').innerHTML=payload.clans.map(c=>{
@@ -79,7 +79,7 @@ export function initIntelligence({getData,switchClan,escape:esc,num,date,apiBase
     $('warrior-history').innerHTML=p?table(['Alvo','CV do alvo','Estrelas','Destruição'],p.hits.map(h=>[esc(h.targetName),num(h.targetTH),num(h.stars),`${num(h.destructionPercentage,1)}%`])):empty('Sem ataques detalhados em guerras encerradas para este guerreiro.');
     const raids=(data?.extras?.raids?.items || []).flatMap(r=>(r.members || []).filter(m=>m.tag===tag).map(m=>[date(parseGameTime(r.startTime)),num(m.attacks),num(m.capitalResourcesLooted)]));
     $('warrior-raids').innerHTML=raids.length?table(['Fim de semana','Ataques','Ouro saqueado'],raids):empty('Nenhuma participação de Capital disponível para este guerreiro.');
-    $('warrior-dialog').showModal();
+    dispatchEvent(new CustomEvent('tow:warrior',{detail:tag}));$('warrior-dialog').showModal();
   }
   document.addEventListener('click',e=>{const b=e.target.closest('[data-warrior]');if(b)openWarrior(b.dataset.warrior);});
   $('warrior-close').addEventListener('click',()=>$('warrior-dialog').close());

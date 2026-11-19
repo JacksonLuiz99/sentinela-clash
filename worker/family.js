@@ -1,3 +1,4 @@
+import { recordRoster } from './management.js';
 import { clash, readState, stateStatement, loadWar, loadExtras } from './monitor.js';
 import { detectEvents, warId, gameTime } from './events.js';
 import { findClan, CLANS } from '../public/clans.js';
@@ -20,7 +21,7 @@ export async function familyDashboard(env, tag, now = Date.now()) {
   if (!findClan(tag)) throw new Error('unknown_clan');
   const key = `family:${tag}`; const leaseKey = `family:${tag}`;
   let saved = await readState(env.DB,key);
-  if (saved?.attemptedAt && now-saved.attemptedAt < CACHE_MS) return responseFor(env,tag,saved,now);
+  if (saved?.managementVersion === 1 && saved?.attemptedAt && now-saved.attemptedAt < CACHE_MS) return responseFor(env,tag,saved,now);
   if (!env.CLASH_API_TOKEN) return {...responseFor(env,tag,saved,now),health:{code:'missing_clash_token'}};
   await env.DB.prepare('INSERT OR IGNORE INTO leases(id,until_ms) VALUES (?,0)').bind(leaseKey).run();
   const lease = await env.DB.prepare('UPDATE leases SET until_ms=? WHERE id=? AND until_ms < ?').bind(now+180000,leaseKey,now).run();
@@ -28,7 +29,7 @@ export async function familyDashboard(env, tag, now = Date.now()) {
   try {
     // Outra requisição pode ter concluído a coleta entre a leitura inicial e a trava.
     saved = await readState(env.DB,key);
-    if (saved?.attemptedAt && now-saved.attemptedAt < CACHE_MS) return responseFor(env,tag,saved,now);
+    if (saved?.managementVersion === 1 && saved?.attemptedAt && now-saved.attemptedAt < CACHE_MS) return responseFor(env,tag,saved,now);
     const scoped = {...env,CLAN_TAG:tag};
     const [clanResult,warResult,extraResult] = await Promise.allSettled([
       clash(scoped,`/clans/${encodeURIComponent(tag)}`),loadWar(scoped,now),loadExtras(scoped,now,saved?.extras)
@@ -49,7 +50,7 @@ export async function familyDashboard(env, tag, now = Date.now()) {
     const snapshots = (saved?.snapshots || []).filter(s=>s.capturedAt >= now-26*3600000);
     if (!snapshots.some(s=>Math.floor(s.capturedAt/3600000)===Math.floor(now/3600000))) snapshots.push({clan,capturedAt:now});
     saved = {
-      coverageStartedAt:saved?.coverageStartedAt || previous?.capturedAt || now,
+      managementVersion:1,coverageStartedAt:saved?.coverageStartedAt || previous?.capturedAt || now,
       timeline:dailyTimeline(saved?.timeline,clan,now),
       attemptedAt:now,current,health:{lastAttempt:now,lastSuccess:now,code:warning || 'ok'},
       events:[...events.values()].sort((a,b)=>b.created_at-a.created_at).slice(0,30),
@@ -59,12 +60,14 @@ export async function familyDashboard(env, tag, now = Date.now()) {
     };
     await stateStatement(env.DB,key,saved).run();
     await stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,saved)).run();
+    if(saved.current?.capturedAt===now) await recordRoster(env,saved.current.clan,now);
     return responseFor(env,tag,saved,now);
   } catch (error) {
     const code = /^(api_[a-z0-9_]+|invalid_clan_response)$/.test(error.message) ? error.message : 'sync_failed';
-    saved = {...saved,attemptedAt:now,health:{...saved?.health,lastAttempt:now,code}};
+    saved = {...saved,managementVersion:1,attemptedAt:now,health:{...saved?.health,lastAttempt:now,code}};
     await stateStatement(env.DB,key,saved).run();
     await stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,saved)).run();
+    if(saved.current?.capturedAt===now) await recordRoster(env,saved.current.clan,now);
     return responseFor(env,tag,saved,now);
   } finally {
     await env.DB.prepare('UPDATE leases SET until_ms=0 WHERE id=?').bind(leaseKey).run();
@@ -81,6 +84,8 @@ export function clanSummary(tag,saved) {
   const clan=saved?.current?.clan;const war=saved?.current?.war;
   const limit=war?.attacksPerMember ?? (war?.kind==='cwl'?1:2);
   return {tag,name:clan?.name || findClan(tag)?.name,members:clan?.members ?? null,league:clan?.warLeague?.name,
+    level:clan?.clanLevel,requiredTH:clan?.requiredTownhallLevel,requiredTrophies:clan?.requiredTrophies,requiredLeague:clan?.requiredLeagueTier?.name,type:clan?.type,description:clan?.description,capitalLevel:clan?.clanCapital?.capitalHallLevel,capitalPoints:clan?.clanCapitalPoints,capitalLeague:clan?.capitalLeague?.name,
+    donations:clan?.memberList?.reduce((n,m)=>n+(m.donations || 0),0),townHalls:(clan?.memberList || []).reduce((counts,m)=>{const th=m.townHallLevel || 0;counts[th]=(counts[th] || 0)+1;return counts;},{}),
     trophies:clan?.clanPoints,capturedAt:saved?.current?.capturedAt || null,health:saved?.health?.code || 'awaiting_first_sync',
     warCapturedAt:saved?.current?.warCapturedAt || null,
     war:war ? {state:war.state,kind:war.kind,opponent:war.opponent?.name,stars:war.clan?.stars,enemyStars:war.opponent?.stars,
@@ -99,6 +104,7 @@ export async function recordPrimarySummary(env,now=Date.now()) {
   if(!current?.clan)return;
   const tag=current.clan.tag;
   const next=dailyTimeline(timeline || [],current.clan,current.capturedAt);
+  await recordRoster(env,current.clan,current.capturedAt);
   await env.DB.batch([stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,{current,health})),stateStatement(env.DB,'timeline',next)]);
 }
 export async function familyOverview(env,now=Date.now()) {

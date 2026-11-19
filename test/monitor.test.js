@@ -16,6 +16,7 @@ function war(state='inWar',kind='regular') {return {state,kind,teamSize:1,startT
 function database() {
   const sql=new DatabaseSync(':memory:');sql.exec('PRAGMA foreign_keys=ON');
   sql.exec(readFileSync(new URL('../migrations/0001_init.sql',import.meta.url),'utf8'));
+  sql.exec(readFileSync(new URL('../migrations/0002_management.sql',import.meta.url),'utf8'));
   function stmt(query,args=[]) {
     return {bind(...values){return stmt(query,values);},async first(){return sql.prepare(query).get(...args) || null;},async all(){return {results:sql.prepare(query).all(...args)};},async run(){const r=sql.prepare(query).run(...args);return {meta:{changes:Number(r.changes)}};}};
   }

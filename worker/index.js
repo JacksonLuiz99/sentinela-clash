@@ -1,3 +1,4 @@
+import { managementOverview, playerEvolution, clanManagement, saveManualWar, saveGoals, ValidationError } from './management.js';
 import { readState, synchronize } from './monitor.js';
 import { publicLinks } from '../public/stats.js';
 import { CLANS, DEFAULT_CLAN, findClan } from '../public/clans.js';
@@ -27,6 +28,30 @@ export async function route(request,env) {
   const headers={Vary:'Origin'};
   if (origin && origin === env.PUBLIC_ORIGIN) headers['Access-Control-Allow-Origin']=origin;
   if (request.method === 'OPTIONS') return new Response(null,{status:204,headers:{...headers,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type'}});
+  if (['/api/management','/api/player-evolution','/api/clan-management','/api/leadership','/api/manual-wars','/api/goals'].includes(path)) {
+    try {
+      if(path==='/api/management' && request.method==='GET')return json(await managementOverview(env),200,headers);
+      if(path==='/api/player-evolution' && request.method==='GET')return json(await playerEvolution(env,url.searchParams.get('player')),200,headers);
+      if(path==='/api/clan-management' && request.method==='GET'){
+        const clan=findClan(url.searchParams.get('clan'));if(!clan)return json({error:'unknown_clan'},400,headers);
+        return json(await clanManagement(env,clan.tag),200,headers);
+      }
+      if(request.method!=='POST')return json({error:'method_not_allowed'},405,headers);
+      if(!await authorized(request,env.LEADERSHIP_TOKEN))return json({error:'Chave de liderança inválida.'},401,headers);
+      if(path==='/api/leadership')return json({ok:true},200,headers);
+      if(!['/api/manual-wars','/api/goals'].includes(path))return json({error:'method_not_allowed'},405,headers);
+      if(!(request.headers.get('Content-Type') || '').startsWith('application/json'))return json({error:'Envie um formulário válido.'},415,headers);
+      const reader=request.body?.getReader();if(!reader)return json({error:'Corpo obrigatório.'},400,headers);
+      const chunks=[];let size=0;
+      for(;;){const {value,done}=await reader.read();if(done)break;size+=value.byteLength;if(size>65536){await reader.cancel();return json({error:'Registro muito grande.'},413,headers);}chunks.push(value);}
+      const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.byteLength;}
+      let input;try{input=JSON.parse(new TextDecoder().decode(bytes));}catch{return json({error:'Formulário inválido.'},400,headers);}
+      let result;try{result=path==='/api/manual-wars'?await saveManualWar(env,input):await saveGoals(env,input);}catch(e){
+        if(e instanceof ValidationError)return json({error:e.message},400,headers);throw e;
+      }
+      return json(result,result.status || 200,headers);
+    }catch(error){return json({error:error instanceof ValidationError?error.message:'Não foi possível consultar ou salvar os dados. Tente novamente.'},error instanceof ValidationError?400:503,headers);}
+  }
   if (path === '/api/sync' && request.method === 'POST') {
     if (!await authorized(request,env.ADMIN_TOKEN)) return json({error:'unauthorized'},401,headers);
     const result=await synchronize(env);
