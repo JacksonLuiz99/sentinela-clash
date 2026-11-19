@@ -1,3 +1,4 @@
+import { initWhatsApp } from './whatsapp.js';
 import { initNavigation } from './navigation.js';
 import { initAttention } from './attention.js';
 import { initManagement } from './management.js';
@@ -23,7 +24,7 @@ try { selectedClan = preferredClan(localStorage.getItem(CLAN_STORAGE)); } catch 
 let activeRequest = 0; let activeController = null;
 const viewCache = new Map();
 const navigation=initNavigation();
-let exportSnapshot = null;let intelligence = null;let management = null;
+let exportSnapshot = null;let intelligence = null;let management = null;let whatsapp = null;
 function setClanIdentity(clan = findClan(selectedClan)) {
   $('clan-select').value = selectedClan;navigation.setClan(findClan(selectedClan)?.label || selectedClan);
   $('observed-clan-name').textContent = clan?.name || selectedClan;
@@ -34,7 +35,7 @@ function setClanIdentity(clan = findClan(selectedClan)) {
 }
 function clearClanData() {
   $('export-dialog').close();exportSnapshot = null;$('open-export').disabled = true;$('download-message').textContent = '';
-  data = null;intelligence?.clear();management?.clear();
+  whatsapp?.close();data = null;intelligence?.clear();management?.clear();
   for (const id of ['metric-wins','metric-members','metric-trophies','metric-league','metric-level','metric-streak']) $(id).textContent = '—';
   $('clan-meta').replaceChildren();$('clan-description').textContent = '';$('clan-requirements').replaceChildren();$('donation-total').textContent = '';
   renderWar(null);$('war-state').textContent = 'CARREGANDO';$('war-summary').innerHTML = empty('Consultando a guerra deste clã…');
@@ -126,7 +127,7 @@ function renderWar(war) {
   const pending = (war.clan.members || []).map(m => ({...m,remaining:Math.max(0,limit-(m.attacks?.length || 0))})).filter(m => m.remaining > 0).sort((a,b) => a.mapPosition-b.mapPosition);
   const triples = players.reduce((n,p) => n+p.triples,0);
   $('war-summary').innerHTML = `<div class="battle-meta"><span><strong>${war.teamSize} × ${war.teamSize}</strong> · ${war.kind === 'cwl'?'LIGA DE GUERRA':'GUERRA DE CLÃS'} · ${war.state === 'preparation'?'INÍCIO':'TÉRMINO'} ${date(parseGameTime(war.state === 'preparation'?war.startTime:war.endTime))}</span><span id="war-clock" class="battle-clock"></span></div><div class="war-score"><div class="war-team">${badge(war.clan.badgeUrls?.medium)}<div><div class="war-team-name">${esc(war.clan.name)}</div><div class="war-team-score">${num(war.clan.stars)}<span aria-label="estrelas"> ★</span></div><div class="war-team-meta">DE ${max} ESTRELAS POSSÍVEIS</div></div></div><span class="versus">VS</span><div class="war-team enemy">${badge(war.opponent.badgeUrls?.medium)}<div><div class="war-team-name">${esc(war.opponent.name)}</div><div class="war-team-score">${num(war.opponent.stars)} ★</div><div class="war-team-meta">DE ${max} ESTRELAS POSSÍVEIS</div></div></div></div><div class="war-progress"><label><span>DESTRUIÇÃO DOS TIGERS <b>${num(war.clan.destructionPercentage,2)}%</b></span><progress max="100" value="${Number(war.clan.destructionPercentage || 0)}" aria-label="Destruição causada pelos Tigers"></progress></label><label class="enemy"><span>DESTRUIÇÃO ADVERSÁRIA <b>${num(war.opponent.destructionPercentage,2)}%</b></span><progress max="100" value="${Number(war.opponent.destructionPercentage || 0)}" aria-label="Destruição causada pelo adversário"></progress></label></div><div class="war-mission"><div><strong>${used}/${expected}</strong><span>ATAQUES REALIZADOS</span></div><div><strong>${Math.max(0,expected-used)}</strong><span>ATAQUES DISPONÍVEIS</span></div><div><strong>${triples}</strong><span>ATAQUES DE TRÊS ESTRELAS</span></div></div>`;
-  if (war.state === 'inWar') $('pending').innerHTML = `<div class="pending-head"><strong>⚔ A TROPA AINDA TEM PODER DE FOGO</strong><span>${pending.length} jogadores com ataques disponíveis</span></div><div class="pending-list">${pending.map(m => `<div class="pending-item"><span>#${m.mapPosition} · ${esc(m.name)}</span><b>${m.remaining} ataque${m.remaining===1?'':'s'}</b></div>`).join('') || empty('Missão cumprida. Todos os ataques foram utilizados.')}</div>`;
+  if (war.state === 'inWar') $('pending').innerHTML = `<div class="pending-head"><strong>⚔ A TROPA AINDA TEM PODER DE FOGO</strong><span>${pending.length} jogadores com ataques disponíveis</span><button class="outline-button" type="button" data-whatsapp-clan="${esc(war.clan.tag)}">Texto para WhatsApp</button></div><div class="pending-list">${pending.map(m => `<div class="pending-item"><span>#${m.mapPosition} · ${esc(m.name)}</span><b>${m.remaining} ataque${m.remaining===1?'':'s'}</b></div>`).join('') || empty('Missão cumprida. Todos os ataques foram utilizados.')}</div>`;
   const members = [...(war.clan.members || [])].sort((a,b) => a.mapPosition-b.mapPosition);
   $('pending').insertAdjacentHTML('beforeend',`<details class="details-heading"><summary>Ver os ${members.length} guerreiros escalados e seus ataques</summary><div class="war-participants">${members.map(m => `<details><summary>#${m.mapPosition} · ${esc(m.name)} · CV ${num(m.townhallLevel ?? m.townHallLevel)} · ${m.attacks?.length || 0}/${limit} ataques</summary>${(m.attacks || []).map(a => {const opponent = war.opponent.members?.find(o => o.tag === a.defenderTag);return `<div class="member-hit"><span class="hit-stars">${'★'.repeat(a.stars || 0)}${'☆'.repeat(Math.max(0,3-(a.stars || 0)))}</span> · ${num(a.destructionPercentage)}% · alvo #${num(opponent?.mapPosition)} ${esc(opponent?.name || a.defenderTag)} · ${num(a.duration)}s</div>`;}).join('') || '<p class="footnote">Nenhum ataque registrado.</p>'}${m.bestOpponentAttack?`<p class="footnote">Melhor ataque recebido: ${num(m.bestOpponentAttack.stars)} ★ · ${num(m.bestOpponentAttack.destructionPercentage)}%.</p>`:''}</details>`).join('')}</div></details>`);
   updateClock();
@@ -247,6 +248,7 @@ async function refresh() {
     if (!data?.current) $('setup').hidden = false;
   } finally {clearTimeout(timer);if(requestId===activeRequest){busy = false;$('refresh').disabled = false;}}
 }
+whatsapp = initWhatsApp({getSelectedClan:()=>selectedClan,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 initAttention({escape:esc,date,openClanSection,showFamily:()=>tab('family',true)});
 management = initManagement({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 intelligence = initIntelligence({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});

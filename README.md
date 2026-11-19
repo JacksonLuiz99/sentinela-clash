@@ -269,3 +269,13 @@ O resumo **O que precisa de atenção?** aparece antes das seções, com filtros
 - Guerras privadas, Liga parcial e guerra sem atualização recente ficam numa área separada de limitações, sem inventar pendências. Uma falha ao consultar o resumo conserva a captura anterior, sinaliza o problema e continua descartando dados conforme envelhecem.
 
 O resumo usa as consultas já existentes de família, com uma leitura adicional das metas no D1; não dispara consultas a novas fontes da API Clash ou novas notificações. O botão de atualização do painel também relê a visão da família.
+
+## Texto pronto para WhatsApp
+
+O botão **Texto para WhatsApp** fica no resumo de atenção, em cada guerra com ataques pendentes e na lista da guerra do clã. Uma janela permite selecionar qualquer um dos 16 clãs, consultar seu dashboard, pré-visualizar o texto, incluir tags opcionalmente, copiar a mensagem ou abrir o link oficial `https://wa.me/?text=...`.
+
+O texto contém clã/tag, modalidade, adversário, placar da captura, término, tempo restante na geração, jogadores com ataques disponíveis em ordem de posição e horário da coleta em Cuiabá. Nomes são tratados como texto simples para não injetar linhas ou formatação do WhatsApp. A geração exige guerra ativa, perfil e guerra recentes, saúde `ok` e escalação completa, sem tags ou posições duplicadas. CWL usa um ataque por membro; guerra comum usa o limite informado pela API ou dois. Guerras privadas, parciais, encerradas, sem pendências ou com dados antigos não geram cobrança.
+
+Abrir a janela apenas consulta o dashboard existente. Copiar ou compartilhar revalida o prazo e a validade da captura; a mensagem perde a disponibilidade se os dados vencerem enquanto a janela estiver aberta. Troca de clã no painel ou fechamento cancela a consulta pendente. Se a área de transferência estiver bloqueada, o texto fica selecionado para cópia manual.
+
+Não há envio automático, destinatários configurados, associação de tags com telefones, marcação automática de contatos ou novas credenciais/custos de integração. O usuário escolhe a conversa ou grupo e confirma o envio no WhatsApp. Os testes de interface verificam o texto, o link e a cópia, sem abrir conversas ou enviar mensagens.
