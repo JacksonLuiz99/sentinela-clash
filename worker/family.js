@@ -6,15 +6,16 @@ import { publicLinks } from '../public/stats.js';
 const CACHE_MS = 300000;
 function responseFor(env, tag, saved, now = Date.now()) {
   return {
-    configured:Boolean(env.CLASH_API_TOKEN), clanTag:tag, clans:CLANS, monitoringMode:'on_demand',
+    configured:Boolean(env.CLASH_API_TOKEN), clanTag:tag, clans:CLANS, monitoringMode:'automatic', collectionIntervalMinutes:15,
     current:saved?.current || null, health:saved?.health || {code:'awaiting_first_sync'},
     wars:saved?.wars || [], events:saved?.events || [], extras:saved?.extras || null,
+    timeline:saved?.timeline || [], coverageStartedAt:saved?.coverageStartedAt || saved?.current?.capturedAt || null,
     baseline:saved?.snapshots?.filter(s => s.capturedAt <= now-86400000).sort((a,b)=>b.capturedAt-a.capturedAt)[0] || null,
     channels:{telegram:false,discord:false},delivery:[],links:publicLinks(env)
   };
 }
 
-// Os novos clãs têm cache próprio. Não alteram tabelas, cron ou fila de avisos do clã original.
+// Coleta isolada por clã; os avisos continuam exclusivos do clã original.
 export async function familyDashboard(env, tag, now = Date.now()) {
   if (!findClan(tag)) throw new Error('unknown_clan');
   const key = `family:${tag}`; const leaseKey = `family:${tag}`;
@@ -48,6 +49,8 @@ export async function familyDashboard(env, tag, now = Date.now()) {
     const snapshots = (saved?.snapshots || []).filter(s=>s.capturedAt >= now-26*3600000);
     if (!snapshots.some(s=>Math.floor(s.capturedAt/3600000)===Math.floor(now/3600000))) snapshots.push({clan,capturedAt:now});
     saved = {
+      coverageStartedAt:saved?.coverageStartedAt || previous?.capturedAt || now,
+      timeline:dailyTimeline(saved?.timeline,clan,now),
       attemptedAt:now,current,health:{lastAttempt:now,lastSuccess:now,code:warning || 'ok'},
       events:[...events.values()].sort((a,b)=>b.created_at-a.created_at).slice(0,30),
       wars:[...wars.values()].sort((a,b)=>(gameTime(b.endTime)||0)-(gameTime(a.endTime)||0)).slice(0,20),
@@ -55,13 +58,51 @@ export async function familyDashboard(env, tag, now = Date.now()) {
       snapshots:snapshots.slice(-26)
     };
     await stateStatement(env.DB,key,saved).run();
+    await stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,saved)).run();
     return responseFor(env,tag,saved,now);
   } catch (error) {
     const code = /^(api_[a-z0-9_]+|invalid_clan_response)$/.test(error.message) ? error.message : 'sync_failed';
     saved = {...saved,attemptedAt:now,health:{...saved?.health,lastAttempt:now,code}};
     await stateStatement(env.DB,key,saved).run();
+    await stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,saved)).run();
     return responseFor(env,tag,saved,now);
   } finally {
     await env.DB.prepare('UPDATE leases SET until_ms=0 WHERE id=?').bind(leaseKey).run();
   }
+}
+
+export function dailyTimeline(previous = [], clan, now) {
+  const day = new Date(now).toISOString().slice(0,10);
+  const point = {day,capturedAt:now,members:clan.members,trophies:clan.clanPoints,capitalPoints:clan.clanCapitalPoints,
+    donations:(clan.memberList || []).reduce((n,m)=>n+(m.donations || 0),0)};
+  return [...previous.filter(p=>p.day!==day && p.capturedAt>=now-31*86400000),point].slice(-32);
+}
+export function clanSummary(tag,saved) {
+  const clan=saved?.current?.clan;const war=saved?.current?.war;
+  const limit=war?.attacksPerMember ?? (war?.kind==='cwl'?1:2);
+  return {tag,name:clan?.name || findClan(tag)?.name,members:clan?.members ?? null,league:clan?.warLeague?.name,
+    trophies:clan?.clanPoints,capturedAt:saved?.current?.capturedAt || null,health:saved?.health?.code || 'awaiting_first_sync',
+    warCapturedAt:saved?.current?.warCapturedAt || null,
+    war:war ? {state:war.state,kind:war.kind,opponent:war.opponent?.name,stars:war.clan?.stars,enemyStars:war.opponent?.stars,
+      endAt:gameTime(war.endTime),pending:war.state==='inWar'?(war.clan?.members || []).reduce((n,m)=>n+Math.max(0,limit-(m.attacks?.length || 0)),0):0}:null};
+}
+export function scheduledClan(now,primary) {
+  const tags=CLANS.filter(c=>c.tag!==primary);
+  return tags[Math.floor(now/60000)%tags.length].tag;
+}
+export async function synchronizeFamily(env,now=Date.now()) {
+  const tag=scheduledClan(now,env.CLAN_TAG || '#R0UPVVVY');
+  return familyDashboard(env,tag,now);
+}
+export async function recordPrimarySummary(env,now=Date.now()) {
+  const [current,health,timeline]=await Promise.all([readState(env.DB,'current'),readState(env.DB,'health'),readState(env.DB,'timeline')]);
+  if(!current?.clan)return;
+  const tag=current.clan.tag;
+  const next=dailyTimeline(timeline || [],current.clan,current.capturedAt);
+  await env.DB.batch([stateStatement(env.DB,`summary:${tag}`,clanSummary(tag,{current,health})),stateStatement(env.DB,'timeline',next)]);
+}
+export async function familyOverview(env,now=Date.now()) {
+  const rows=await env.DB.prepare("SELECT value FROM state WHERE key LIKE 'summary:%'").all();
+  const summaries=new Map(rows.results.map(r=>{const s=JSON.parse(r.value);return [s.tag,s];}));
+  return {generatedAt:now,intervalMinutes:15,clans:CLANS.map(c=>({...c,...summaries.get(c.tag)}))};
 }

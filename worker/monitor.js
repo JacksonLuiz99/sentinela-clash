@@ -61,12 +61,12 @@ export async function loadWar(env, now) {
   // A Liga tem no máximo quatro confrontos por rodada (grupos de oito clãs).
   const tags = [...new Set(rounds.slice(-3).flatMap(r => r.warTags).filter(t => t !== '#0'))];
   const responses = await Promise.allSettled(tags.map(t => clash(env,`/clanwarleagues/wars/${encodeURIComponent(t)}`)));
-  const wars = responses.filter(r => r.status === 'fulfilled').map(r => orientWar(r.value,tag)).filter(Boolean);
+  const wars = responses.map((r,i) => r.status === 'fulfilled' ? orientWar({...r.value,tag:tags[i]},tag) : null).filter(Boolean);
   const rank = w => w.state === 'inWar' ? 0 : w.state === 'preparation' ? 1 : 2;
   wars.sort((a,b) => rank(a)-rank(b) || (rank(a) === 1 ? gameTime(a.startTime)-gameTime(b.startTime) : gameTime(b.endTime)-gameTime(a.endTime)));
   const warning = responses.some(r => r.status === 'rejected') ? 'cwl_partial' : null;
   if (!wars.length && warning) throw new Error('cwl_partial');
-  const observedWars = wars.map(w => ({ ...w, kind:'cwl', attacksPerMember:1 }));
+  const observedWars = wars.map(w => ({ ...w, kind:'cwl', attacksPerMember:1, season:group.season, round:(group.rounds || []).findIndex(r=>r.warTags?.includes(w.tag))+1 }));
   if (regular) observedWars.push({ ...regular, kind:'regular' });
   return { war: observedWars[0] || null, observedWars, warning };
 }

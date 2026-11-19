@@ -1,3 +1,4 @@
+import { initIntelligence } from './intelligence.js';
 import { REPORTS, buildExport, createDownload } from './exports.js';
 import { CLANS, DEFAULT_CLAN, findClan, preferredClan } from './clans.js';
 import { performance, mergedHistory, outcome, parseGameTime, publicLinks, podiumHighlights } from './stats.js';
@@ -18,18 +19,18 @@ let selectedClan = DEFAULT_CLAN;
 try { selectedClan = preferredClan(localStorage.getItem(CLAN_STORAGE)); } catch { /* Funciona mesmo sem armazenamento local. */ }
 let activeRequest = 0; let activeController = null;
 const viewCache = new Map();
-let exportSnapshot = null;
+let exportSnapshot = null;let intelligence = null;
 function setClanIdentity(clan = findClan(selectedClan)) {
   $('clan-select').value = selectedClan;
   $('observed-clan-name').textContent = clan?.name || selectedClan;
   $('observed-clan-tag').textContent = selectedClan;
   document.title = `${clan?.name || selectedClan} · Família TIGERS`;
   document.querySelectorAll('[data-clan-link]').forEach(a => a.href = `https://link.clashofclans.com/pt?action=OpenClanProfile&tag=${encodeURIComponent(selectedClan.slice(1))}`);
-  $('clan-monitoring-note').textContent = selectedClan === DEFAULT_CLAN ? 'Monitoramento automático. Os avisos deste clã já estão configurados.' : 'Consulta no painel. Os avisos deste clã serão configurados depois; o histórico individual registra guerras consultadas.';
+  $('clan-monitoring-note').textContent = selectedClan === DEFAULT_CLAN ? 'Monitoramento automático. Os avisos deste clã já estão configurados.' : 'Coleta automática a cada 15 min. Os canais de avisos deste clã serão configurados depois.';
 }
 function clearClanData() {
   $('export-dialog').close();exportSnapshot = null;$('open-export').disabled = true;$('download-message').textContent = '';
-  data = null;
+  data = null;intelligence?.clear();
   for (const id of ['metric-wins','metric-members','metric-trophies','metric-league','metric-level','metric-streak']) $(id).textContent = '—';
   $('clan-meta').replaceChildren();$('clan-description').textContent = '';$('clan-requirements').replaceChildren();$('donation-total').textContent = '';
   renderWar(null);$('war-state').textContent = 'CARREGANDO';$('war-summary').innerHTML = empty('Consultando a guerra deste clã…');
@@ -45,7 +46,7 @@ function switchClan(tag, persist = true) {
   if(persist) {try {localStorage.setItem(CLAN_STORAGE, selectedClan);} catch { /* A troca continua funcionando. */ }}
   clearClanData();setClanIdentity();
   if(viewCache.has(selectedClan)) render(viewCache.get(selectedClan));
-  refresh();
+  refresh();tab('overview');
 }
 $('clan-select').replaceChildren(...CLANS.map(clan => {const option=document.createElement('option');option.value=clan.tag;option.textContent=`${clan.label || clan.name} · ${clan.tag}`;return option;}));
 $('clan-select').addEventListener('change',event=>switchClan(event.target.value));
@@ -78,7 +79,7 @@ function renderMembers() {
   $('member-rows').innerHTML = visible.length ? visible.map(m => {
     const old = baseline.get(m.tag);const diff = old ? (m.donations || 0)-(old.donations || 0) : null;
     const delta = diff === null ? '—' : diff < 0 ? 'Reiniciado' : `+${num(diff)}`;
-    return `<tr><td class="player-name"><a href="${esc(playerLink(m.tag))}" target="_blank" rel="noopener noreferrer">${esc(m.name)} ↗</a><small>${esc(m.tag)}</small></td><td data-label="Cargo">${esc(roles[m.role] || m.role)}</td><td data-label="CV">${num(m.townHallLevel)}</td><td data-label="Troféus">${num(m.trophies)}</td><td data-label="Doadas">${num(m.donations)}</td><td data-label="Recebidas">${num(m.donationsReceived)}</td><td data-label="Variação 24h">${delta}</td></tr>`;
+    return `<tr><td class="player-name"><a href="${esc(playerLink(m.tag))}" target="_blank" rel="noopener noreferrer">${esc(m.name)} ↗</a><small>${esc(m.tag)}</small><button class="text-button profile-button" data-warrior="${esc(m.tag)}">Ver desempenho</button></td><td data-label="Cargo">${esc(roles[m.role] || m.role)}</td><td data-label="CV">${num(m.townHallLevel)}</td><td data-label="Troféus">${num(m.trophies)}</td><td data-label="Doadas">${num(m.donations)}</td><td data-label="Recebidas">${num(m.donationsReceived)}</td><td data-label="Variação 24h">${delta}</td></tr>`;
   }).join('') : '<tr><td colspan="7">Nenhum guerreiro encontrado.</td></tr>';
 }
 $('search').addEventListener('input',renderMembers);$('sort').addEventListener('change',renderMembers);
@@ -156,11 +157,11 @@ function renderCapital(clan) {
 function render(payload) {
   data = payload;const current = data.current;const clan = current?.clan;const health = data.health || {};
   $('setup').hidden = Boolean(clan);$('open-export').disabled = !clan;renderLinks(data.links);if(clan)setClanIdentity(clan);
-  const stale = current && Date.now()-current.capturedAt > 15*60000;
-  const warStale = current?.war && (!current.warCapturedAt || Date.now()-current.warCapturedAt > 15*60000);
+  const stale = current && Date.now()-current.capturedAt > (data.collectionIntervalMinutes || 5)*2*60000;
+  const warStale = current?.war && (!current.warCapturedAt || Date.now()-current.warCapturedAt > (data.collectionIntervalMinutes || 5)*2*60000);
   const ok = health.code === 'ok' && !stale;
   $('status').classList.toggle('warn',!ok || Boolean(warStale));
-  $('status').textContent = clan ? `${ok?'MONITOR CONECTADO':'COLETA COM PENDÊNCIAS'} · ${date(current.capturedAt)} · horário de Cuiabá · ${data.monitoringMode === 'on_demand'?'consulta no painel, cache de até 5 min':'consultas a cada 5 min'}${stale?' · dados desatualizados':''}${warStale?' · guerra aguardando atualização':''}` : 'Aguardando conexão com o monitor do clã.';
+  $('status').textContent = clan ? `${ok?'MONITOR CONECTADO':'COLETA COM PENDÊNCIAS'} · ${date(current.capturedAt)} · horário de Cuiabá · ${data.monitoringMode === 'on_demand'?'consulta no painel, cache de até 5 min':`consultas automáticas a cada ${data.collectionIntervalMinutes || 5} min`}${stale?' · dados desatualizados':''}${warStale?' · guerra aguardando atualização':''}` : 'Aguardando conexão com o monitor do clã.';
   if (clan) {
     $('metric-wins').textContent = num(clan.warWins);$('metric-members').textContent = `${clan.members}/50`;
     $('metric-trophies').textContent = num(clan.clanPoints);$('metric-level').textContent = `CLÃ NÍVEL ${clan.clanLevel}`;
@@ -176,12 +177,12 @@ function render(payload) {
     $('donors').classList.remove('empty');$('donors').innerHTML = top.map((m,i) => `<div class="donor"><span>0${i+1}</span><div><strong>${esc(m.name)}</strong><progress value="${Number(m.donations || 0)}" max="${max}" aria-label="${esc(m.name)}: ${num(m.donations)} doações"></progress></div><b>${num(m.donations)}</b></div>`).join('');
     $('donation-total').textContent = `${num(clan.memberList.reduce((n,m) => n+(m.donations || 0),0))} tropas doadas pelos membros atuais nesta temporada.`;
   }
-  renderRankings();renderHistory();renderEvents(data.events || [],'events');renderEvents((data.events || []).slice(0,4),'recent');
+  intelligence?.render();renderRankings();renderHistory();renderEvents(data.events || [],'events');renderEvents((data.events || []).slice(0,4),'recent');
   for (const channel of ['telegram','discord']) {
     const enabled = data.channels?.[channel];const delivery = data.delivery?.find(d => d.channel === channel);
     $(`${channel}-state`).textContent = enabled?'AVISOS ATIVOS':'AGUARDANDO CONEXÃO';
     $(`${channel}-state`).classList.toggle('good',Boolean(enabled));
-    $(`${channel}-info`).textContent = enabled ? `${delivery?.last_sent?'Último envio confirmado: '+date(delivery.last_sent):'Canal configurado, aguardando o primeiro envio.'}${delivery?.retrying?' Há mensagens aguardando nova tentativa.':''}` : data.monitoringMode === 'on_demand' ? 'Os avisos deste clã serão configurados em uma próxima etapa.' : 'Este canal ainda não está conectado ao monitor.';
+    $(`${channel}-info`).textContent = enabled ? `${delivery?.last_sent?'Último envio confirmado: '+date(delivery.last_sent):'Canal configurado, aguardando o primeiro envio.'}${delivery?.retrying?' Há mensagens aguardando nova tentativa.':''}` : data.clanTag !== DEFAULT_CLAN ? 'Os avisos deste clã serão configurados em uma próxima etapa.' : 'Este canal ainda não está conectado ao monitor.';
   }
 }
 function updateExportOptions() {
@@ -243,5 +244,6 @@ async function refresh() {
     if (!data?.current) $('setup').hidden = false;
   } finally {clearTimeout(timer);if(requestId===activeRequest){busy = false;$('refresh').disabled = false;}}
 }
+intelligence = initIntelligence({getData:()=>data,switchClan,escape:esc,num,date,apiBase:()=>window.CLAN_CONFIG?.apiBase || ''});
 $('refresh').addEventListener('click',refresh);switchClan(selectedClan,false);
 setInterval(() => {if(!document.hidden) refresh();},60000);setInterval(() => {if(!document.hidden) updateClock();},1000);

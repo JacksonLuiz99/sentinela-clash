@@ -2,7 +2,7 @@ import test, { afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { readFileSync } from 'node:fs';
-import { familyDashboard } from '../worker/family.js';
+import { familyDashboard, scheduledClan, synchronizeFamily, familyOverview, dailyTimeline, clanSummary, recordPrimarySummary } from '../worker/family.js';
 import { readState, stateStatement } from '../worker/monitor.js';
 import { route } from '../worker/index.js';
 import { CLANS, DEFAULT_CLAN, preferredClan, findClan } from '../public/clans.js';
@@ -56,7 +56,7 @@ test('dois clãs mantêm guerra, membros e histórico separados',async()=>{
 test('novos clãs não alteram dados nem fila de notificações do clã original',async()=>{
   const DB=database();const primary={clan:{tag:DEFAULT_CLAN},capturedAt:1};await stateStatement(DB,'current',primary).run();const calls=mockFamilyApi();
   const result=await familyDashboard(env(DB),a,now);assert.deepEqual(await readState(DB,'current'),primary);
-  assert.deepEqual(result.channels,{telegram:false,discord:false});assert.equal(result.monitoringMode,'on_demand');
+  assert.deepEqual(result.channels,{telegram:false,discord:false});assert.equal(result.monitoringMode,'automatic');assert.equal(result.collectionIntervalMinutes,15);
   assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM deliveries').first()).n,0);
   assert.equal((await DB.prepare("SELECT until_ms FROM leases WHERE id='sync'").first()).until_ms,0);
   assert.ok(calls.every(c=>c.method==='GET' && !c.url.includes('telegram') && !c.url.includes('discord')));DB.close();
@@ -91,4 +91,34 @@ test('a referência de doações de 24h pertence ao clã selecionado',async()=>{
   const DB=database();mockFamilyApi();await familyDashboard(env(DB),a,now);
   const later=await familyDashboard(env(DB),a,now+86400000);
   assert.equal(later.baseline.clan.tag,a);assert.equal(later.baseline.capturedAt,now);DB.close();
+});
+
+test('agendamento cobre os 15 outros clãs em 15 minutos sem incluir o principal',()=>{
+  const tags=Array.from({length:15},(_,i)=>scheduledClan(now+i*60000,DEFAULT_CLAN));
+  assert.equal(new Set(tags).size,15);assert.ok(!tags.includes(DEFAULT_CLAN));
+  assert.equal(scheduledClan(now,DEFAULT_CLAN),scheduledClan(now+15*60000,DEFAULT_CLAN));
+});
+test('coleta agendada funciona sem visitantes e publica resumo sem lista de membros',async()=>{
+  const DB=database();const calls=mockFamilyApi();const result=await synchronizeFamily(env(DB),now);
+  assert.equal(result.current.clan.tag,scheduledClan(now,DEFAULT_CLAN));assert.ok(calls.length>0);
+  const overview=await familyOverview(env(DB),now);assert.equal(overview.clans.length,16);
+  const summary=overview.clans.find(c=>c.tag===result.clanTag);assert.equal(summary.members,1);assert.equal(summary.war.pending,1);
+  assert.ok(!JSON.stringify(overview).includes('secret'));assert.ok(!JSON.stringify(overview).includes('memberList'));DB.close();
+});
+test('série diária preserva a última coleta de cada dia e limita retenção',()=>{
+  let points=[];for(let i=0;i<40;i++)points=dailyTimeline(points,{members:i,clanPoints:i*100,memberList:[]},now+i*86400000);
+  assert.ok(points.length<=32);assert.equal(points.at(-1).members,39);
+  points=dailyTimeline(points,{members:50,memberList:[]},now+39*86400000+1000);
+  assert.equal(points.at(-1).members,50);assert.equal(new Set(points.map(p=>p.day)).size,points.length);
+});
+test('visão da família só lê resumos e não consulta a API do jogo',async()=>{
+  const DB=database();const calls=mockFamilyApi();await familyDashboard(env(DB),a,now);const before=calls.length;
+  const r=await route(new Request('https://worker.test/api/family'),env(DB));assert.equal(r.status,200);
+  assert.equal((await r.json()).clans.length,16);assert.equal(calls.length,before);DB.close();
+});
+test('resumo do principal e série diária usam dados existentes sem enviar avisos',async()=>{
+  const DB=database();const calls=mockFamilyApi();await stateStatement(DB,'current',{clan:{tag:DEFAULT_CLAN,members:48,memberList:[]},capturedAt:now}).run();
+  await recordPrimarySummary(env(DB),now);assert.equal(calls.length,0);
+  assert.equal((await familyOverview(env(DB),now)).clans.find(c=>c.tag===DEFAULT_CLAN).members,48);
+  assert.equal((await readState(DB,'timeline'))[0].members,48);DB.close();
 });

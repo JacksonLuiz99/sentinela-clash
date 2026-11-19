@@ -1,7 +1,7 @@
 import { readState, synchronize } from './monitor.js';
 import { publicLinks } from '../public/stats.js';
 import { CLANS, DEFAULT_CLAN, findClan } from '../public/clans.js';
-import { familyDashboard } from './family.js';
+import { familyDashboard, familyOverview, synchronizeFamily, recordPrimarySummary } from './family.js';
 
 const json = (data,status=200,headers={}) => Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}});
 
@@ -30,7 +30,11 @@ export async function route(request,env) {
   if (path === '/api/sync' && request.method === 'POST') {
     if (!await authorized(request,env.ADMIN_TOKEN)) return json({error:'unauthorized'},401,headers);
     const result=await synchronize(env);
+    if(result.ok) await recordPrimarySummary(env);
     return json(result,result.ok?200:result.code==='sync_busy'?409:503,headers);
+  }
+  if(path === '/api/family' && request.method === 'GET') {
+    try {return json(await familyOverview(env),200,headers);} catch {return json({error:'family_unavailable'},503,headers);}
   }
   if (path !== '/api/dashboard') return json({error:'not_found'},404,headers);
   if (request.method !== 'GET') return json({error:'method_not_allowed'},405,headers);
@@ -39,16 +43,16 @@ export async function route(request,env) {
   if (!env.DB) return json({configured:false,clanTag:selected.tag,clans:CLANS,health:{code:'missing_database'}},503,headers);
   try {
     if (selected.tag !== (env.CLAN_TAG || DEFAULT_CLAN)) return json(await familyDashboard(env,selected.tag),200,headers);
-    const [current,health,events,wars,snapshot,delivery,extras]=await Promise.all([
+    const [current,health,events,wars,snapshot,delivery,extras,timeline]=await Promise.all([
       readState(env.DB,'current'),readState(env.DB,'health'),
       env.DB.prepare('SELECT id,type,message,created_at FROM events ORDER BY created_at DESC LIMIT 30').all(),
       env.DB.prepare('SELECT payload FROM wars ORDER BY end_at DESC LIMIT 20').all(),
       env.DB.prepare('SELECT payload,created_at FROM snapshots WHERE created_at <= ? ORDER BY created_at DESC LIMIT 1').bind(Date.now()-86400000).first(),
       env.DB.prepare('SELECT channel, MAX(sent_at) AS last_sent, SUM(CASE WHEN sent_at IS NULL AND next_try>0 THEN 1 ELSE 0 END) AS retrying FROM deliveries GROUP BY channel').all(),
-      readState(env.DB,'extras')
+      readState(env.DB,'extras'),readState(env.DB,'timeline')
     ]);
     const configured=Boolean(env.CLASH_API_TOKEN);
-    const payload={configured,clanTag:env.CLAN_TAG,clans:CLANS,monitoringMode:'automatic',current,health:health || {code:configured?'awaiting_first_sync':'missing_clash_token'},
+    const payload={configured,clanTag:env.CLAN_TAG,clans:CLANS,monitoringMode:'automatic',collectionIntervalMinutes:5,timeline:timeline || [],current,health:health || {code:configured?'awaiting_first_sync':'missing_clash_token'},
       events:events.results,wars:wars.results.map(w=>JSON.parse(w.payload)),
       baseline:snapshot ? {clan:JSON.parse(snapshot.payload),capturedAt:snapshot.created_at} : null,
       channels:{telegram:Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID),discord:Boolean(env.DISCORD_WEBHOOK_URL)},
@@ -62,5 +66,8 @@ export async function route(request,env) {
 
 export default {
   fetch: route,
-  scheduled(_controller,env,ctx) {ctx.waitUntil(synchronize(env));}
+  scheduled(controller,env,ctx) {
+    const now=controller.scheduledTime || Date.now();
+    ctx.waitUntil(controller.cron === '* * * * *' ? synchronizeFamily(env,now) : synchronize(env,now).then(async result=>{if(result.ok)await recordPrimarySummary(env,now);return result;}));
+  }
 };

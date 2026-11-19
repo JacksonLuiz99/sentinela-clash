@@ -69,9 +69,19 @@ O seletor oferece os 16 clãs confirmados na API, na ordem informada pela famíl
 
 A última escolha fica na chave `tigers-last-clan` do localStorage, independentemente do tema e da fonte. Uma preferência inválida retorna ao TIGERS OF WAR 4. A troca cancela a consulta anterior, limpa os dados exibidos e verifica a tag da resposta antes de atualizar a tela. O botão para abrir o clã no jogo também acompanha a seleção.
 
-`GET /api/dashboard?clan=%23TAG` aceita somente as tags do catálogo em `public/clans.js`. Sem parâmetro, mantém a compatibilidade com o clã original. Os novos clãs usam cache isolado em `state`, sob `family:<tag>`, e uma trava própria. Perfil, guerra e histórico são atualizados ao consultar o painel, com cache de cinco minutos e cache complementar de uma hora. Até 20 guerras detalhadas e 26 amostras horárias são retidas por clã consultado. Os dados do clã original, seu cron e a fila de avisos não são migrados nem compartilhados com os novos clãs.
+`GET /api/dashboard?clan=%23TAG` aceita somente as tags do catálogo em `public/clans.js`. Sem parâmetro, mantém a compatibilidade com o clã original. Os novos clãs usam cache isolado em `state`, sob `family:<tag>`, e uma trava própria. Perfil, guerra e histórico são atualizados automaticamente e também ao consultar o painel, com cache de cinco minutos e cache complementar de uma hora. Até 20 guerras detalhadas e 26 amostras horárias são retidas por clã consultado. Os dados e a fila de avisos do clã original permanecem isolados.
 
-**Escopo atual:** somente o TIGERS OF WAR 4 tem monitoramento automático e avisos configurados. Os demais são consultados pelo painel e não enviam notificações. O histórico individual deles cresce com os confrontos consultados, sem promessa de capturar guerras enquanto ninguém usa o painel. Canais e monitoramento contínuo dos novos clãs serão configurados em etapa futura.
+**Coleta automática:** o cron `*/5 * * * *` mantém o TOW 4 a cada cinco minutos. Um segundo cron `* * * * *` coleta um dos outros 15 clãs por minuto, escolhido pelo minuto UTC módulo 15. Cada clã completa um ciclo em aproximadamente 15 minutos mesmo sem visitantes. As execuções são separadas para respeitar limites por invocação do plano gratuito. Apenas TOW 4 envia avisos; canais dos demais ficam para outra etapa.
+
+### Inteligência da família
+
+- `GET /api/family` lê 16 resumos leves de `summary:<tag>` sem consultar a API do jogo. Totais incluem apenas coletas dos últimos 30 minutos; guerras exigem atualização própria recente. Exibe membros, vagas, ligas, placares e ataques pendentes, com botão para observar cada clã.
+- A aba Inteligência filtra guerras encerradas em 7/14/30 dias, CV do atacante e relação com o CV do alvo. O CV é avaliado por confronto, inclusive se o jogador evoluiu entre guerras. Alvos desconhecidos são excluídos de comparações por CV. Médias mostram o tamanho da amostra.
+- A comparação semanal usa duas janelas consecutivas de sete dias. Não calcula evolução sem amostra anterior.
+- A série diária mantém a última captura por dia UTC por até 31 dias, com membros, troféus, Capital e contador de doações da temporada. Ela começa nesta versão, sem inventar dados retroativos. Os novos clãs guardam a série no próprio estado e o principal em `timeline`.
+- A central CWL mostra rodadas, temporada, escalações e resultados efetivamente observados. A consulta continua limitada às três últimas rodadas disponíveis; não afirma cobertura completa da temporada.
+- O botão Ver desempenho na tropa e os nomes dos relatórios abrem o perfil local do guerreiro, com ataques detalhados encerrados e participação na Capital. O perfil usa dados coletados no clã selecionado, não a carreira completa ou atividade online.
+- Capital permite alternar os últimos três fins de semana e mostra ataques, limite, bônus e saque. Membros atuais sem registro são sinalizados sem atribuir zero ataques, pois podem ter entrado depois.
 
 Na validação inicial, TIGERS OF WAR e TOW-eSports retornaram acesso negado aos dados de guerra. Seus perfis continuam disponíveis, e o painel identifica a guerra como indisponível em vez de inferir que não há confronto.
 
@@ -100,7 +110,7 @@ GitHub ──build──> Vercel (painel estático público)
                     └─> Discord webhook
 ```
 
-Usa as cotas gratuitas dos provedores, sem contratar plano pago. Cinco minutos são 288 execuções por dia. O histórico usa uma captura do clã por hora (retenção de 30 dias), eventos por 90 dias e guerras por 180 dias. O painel mostra as últimas 20 guerras e 30 ocorrências. Cotas e termos dos serviços podem mudar. O plano gratuito do Worker tem orçamento de CPU reduzido; acompanhe métricas após conectar os dados reais.
+Usa as cotas gratuitas dos provedores, sem contratar plano pago. O cron principal executa 288 vezes por dia e o da família 1.440 vezes por dia; este último distribui as execuções entre os outros 15 clãs. O histórico usa uma captura do clã por hora (retenção de 30 dias), eventos por 90 dias e guerras por 180 dias. O painel mostra as últimas 20 guerras e 30 ocorrências. Cotas e termos dos serviços podem mudar. O plano gratuito do Worker tem orçamento de CPU reduzido; acompanhe métricas após conectar os dados reais.
 
 O proxy é um serviço de terceiros, sem garantia de disponibilidade: ele recebe a chave dedicada da API Clash em cada consulta. Não recebe tokens do Telegram ou Discord. Use uma chave exclusiva para este projeto. É possível migrar o acesso para API direta alterando CLASH_API_BASE e usando infraestrutura com IP autorizado.
 
